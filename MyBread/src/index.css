@@ -1,0 +1,40 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap");
+@import "tailwindcss";
+
+:root {
+  --forest: #3c6e4d;
+  --forest-deep: #315b40;
+  --brass: #c19a6b;
+  --cream: #f5e3d1;
+  --cream-soft: #fbf3ea;
+  --ink: #2a2d34;
+  --white: #ffffff;
+  --brown: #4d382d;
+  --line: #ead9c6;
+  --muted: #766c65;
+  --shadow: 0 20px 55px rgb(42 45 52 / 10%);
+  color: var(--ink);
+  background: var(--cream);
+  font-family: "DM Sans", sans-serif;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  background: var(--cream);
+}
+
+button {
+  font: inherit;
+}
+
+button:focus-visible {
+  outline: 3px solid rgb(193 154 107 / 45%);
+  outline-offset: 3px;
+}
