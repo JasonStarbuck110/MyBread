@@ -1,0 +1,35 @@
+/* Student-only styles */
+/* Hero: the one bold moment */
+.hero { display: flex; align-items: center; gap: 2rem; background: var(--brown); color: var(--cream); border-radius: 16px; padding: 1.75rem; margin-bottom: 1rem; }
+.hero h2 { color: var(--cream); font-size: 1.8rem; }
+.hero-body p { margin: 0.5rem 0 1rem; max-width: 46ch; }
+.ring { position: relative; width: 140px; height: 140px; flex: none; }
+.ring svg { width: 100%; height: 100%; }
+.ring-track { fill: none; stroke: rgba(245, 227, 209, 0.2); stroke-width: 12; }
+.ring-fill { fill: none; stroke: var(--tan); stroke-width: 12; stroke-linecap: round; }
+.ring-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-level { font-family: var(--head); font-size: 2.6rem; line-height: 1; }
+.ring-sub { font-size: 0.85rem; opacity: 0.8; }
+
+/* Chart */
+.chart { width: 100%; height: auto; display: block; }
+.chart-line { fill: none; stroke: var(--green); stroke-width: 3; stroke-linejoin: round; }
+.chart-area { fill: var(--green); opacity: 0.12; }
+
+/* Achievements */
+.badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.badge { background: var(--white); border-radius: 12px; padding: 1.1rem; display: flex; flex-direction: column; gap: 0.35rem; border: 1px solid rgba(78, 59, 49, 0.12); opacity: 0.6; }
+.badge.earned { opacity: 1; border-color: var(--tan); }
+.badge-dot { width: 40px; height: 40px; border-radius: 50%; border: 2px dashed var(--tan); display: grid; place-items: center; color: var(--white); font-weight: 700; }
+.badge.earned .badge-dot { background: var(--green); border: 0; }
+
+/* Account, leaderboard, links */
+.profile { display: grid; grid-template-columns: 100px 1fr; gap: 0.4rem 1rem; margin: 0; }
+.profile dt { color: #6b5d55; }
+.profile dd { margin: 0; font-weight: 500; }
+tr.you td { background: var(--cream); font-weight: 700; }
+.link-title { color: var(--green); font-weight: 700; }
+
+@media (max-width: 800px) {
+  .hero { flex-direction: column; text-align: center; }
+}
