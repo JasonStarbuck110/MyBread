@@ -1,0 +1,203 @@
+
+:root {
+    --chestnut: #4E3B31;
+    --pine: #3C6E4D;
+    --tan: #C19A6B;
+    --cream: #F5E3D1;
+    --charcoal: #2A2D34;
+    --white: #FFFFFF;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body, #root {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--cream);
+    color: var(--charcoal);
+}
+
+/* Main application layout */
+.mybread-app {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.mybread-sidebar {
+    width: 200px;
+    min-width: 200px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    padding: 24px 15px;
+
+    display: flex;
+    flex-direction: column;
+
+    background-color: var(--charcoal);
+    color: var(--white);
+}
+
+/* MyBread title */
+.mybread-brand {
+    color: var(--tan);
+    font-family: arial;
+    font-size: 24px;
+    margin: 0 0 28px;
+}
+
+/* Navigation buttons */
+.mybread-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mybread-nav-link {
+    width: 100%;
+    padding: 11px 12px;
+
+    background: transparent;
+    color: var(--white);
+
+    border: none;
+    border-radius: 6px;
+
+    text-align: left;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.mybread-nav-link:hover {
+    background-color: #41434A;
+}
+
+.mybread-nav-link.active {
+    background-color: var(--pine);
+    font-weight: bold;
+}
+
+/* Student stats */
+.mybread-sidebar-footer {
+    margin-top: auto;
+    padding: 15px 5px 0;
+    border-top: 1px solid #44464C;
+
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Main page area */
+.mybread-main {
+    flex: 1;
+    min-width: 0;
+    padding: 28px;
+    background-color: var(--cream);
+}
+
+/* Placeholder pages */
+.mybread-placeholder h1 {
+    font-family: Georgia, serif;
+    color: var(--chestnut);
+}
+
+/* Mobile layout */
+@media (max-width: 700px) {
+    .mybread-app {
+        flex-direction: column;
+    }
+
+    .mybread-sidebar {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        position: static;
+        padding: 16px;
+    }
+
+    .mybread-brand {
+        margin-bottom: 12px;
+    }
+
+    .mybread-navigation {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+
+    .mybread-nav-link {
+        width: auto;
+    }
+
+    .mybread-sidebar-footer {
+        display: none;
+    }
+
+    .mybread-main {
+        padding: 16px;
+    }
+}
+
+
+/* Sidebar header */
+.mybread-sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Hamburger hidden on desktop */
+.mybread-menu-toggle {
+    display: none;
+}
+
+/* Mobile navigation */
+@media (max-width: 700px) {
+
+    .mybread-sidebar {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        position: static;
+        padding: 16px;
+    }
+
+    .mybread-brand {
+        margin: 0;
+    }
+
+    .mybread-menu-toggle {
+        display: block;
+        background: transparent;
+        border: none;
+        color: var(--white);
+        font-size: 28px;
+        cursor: pointer;
+        padding: 4px 10px;
+    }
+
+    .mybread-navigation {
+        display: none;
+        flex-direction: column;
+        flex-wrap: nowrap;
+        margin-top: 16px;
+    }
+
+    .mybread-navigation.is-open {
+        display: flex;
+    }
+
+    .mybread-nav-link {
+        width: 100%;
+    }
+
+    .mybread-sidebar-footer {
+        display: none;
+    }
+}
