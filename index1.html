@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyBread - Teacher</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="logo">MyBread</div>
+      <div class="role">Teacher</div>
+
+      <nav class="nav">
+        <a href="#dashboard" id="nav-dashboard">Dashboard</a>
+        <a href="#students" id="nav-students">Students</a>
+        <a href="#lessons" id="nav-lessons">Lessons</a>
+        <a href="#stocks" id="nav-stocks">Stocks</a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <strong id="teacher-name"></strong>
+        <span id="class-name"></span>
+      </div>
+    </aside>
+
+    <!-- each page gets drawn in here by app.js -->
+    <main class="main" id="page"></main>
+  </div>
+
+  <!-- side panel that opens when you click a student -->
+  <div class="overlay" id="overlay" onclick="closeStudent()"></div>
+  <aside class="drawer" id="drawer"></aside>
+
+  <div class="message" id="message"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
