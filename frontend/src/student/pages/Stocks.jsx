@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import PortfolioChart from '../components/PortfolioChart'
-import { STOCKS, money } from '../data'
+import { STOCKS, STARTING_CASH, money } from '../data'
 
 export default function Stocks({ cash, setCash, holdings, setHoldings, total, stockValue }) {
   const [query, setQuery] = useState('')
@@ -41,7 +41,7 @@ export default function Stocks({ cash, setCash, holdings, setHoldings, total, st
   }
 
   const held = Object.entries(holdings)
-  const profit = total - 515 // starting value for this demo
+  const profit = total - STARTING_CASH
 
   return (
     <>

@@ -7,7 +7,8 @@ import Achievements from './pages/Achievements'
 import Links from './pages/Links'
 import Account from './pages/Account'
 import JoinModal from './components/JoinModal'
-import { STUDENT, STOCKS, LINKS } from './data'
+import { ME, STUDENT, STOCKS } from './data'
+import { useLinks } from '../shared/useLinks'
 import logo from '../assets/logo.png'
 import './student.css'
 
@@ -22,11 +23,11 @@ const NAV = [
 
 export default function StudentApp({ onLogout }) {
   const [page, setPage] = useState('home')
-  const [cash, setCash] = useState(500)
-  const [holdings, setHoldings] = useState({ AAPL: 0.0438 })
+  const [cash, setCash] = useState(ME.cash)
+  const [holdings, setHoldings] = useState(Object.fromEntries(ME.holdings.map((h) => [h.ticker, h.shares])))
   const [classes, setClasses] = useState([STUDENT.className])
   const [joinOpen, setJoinOpen] = useState(false)
-  const [links, setLinks] = useState(LINKS)
+  const [links] = useLinks()
 
   const stockValue = Object.entries(holdings).reduce((s, [t, sh]) => s + sh * STOCKS[t].price, 0)
   const total = cash + stockValue
@@ -56,7 +57,7 @@ export default function StudentApp({ onLogout }) {
         )}
         {page === 'leaderboards' && <Leaderboards total={total} />}
         {page === 'achievements' && <Achievements />}
-        {page === 'links' && <Links links={links} setLinks={setLinks} />}
+        {page === 'links' && <Links links={links} />}
         {page === 'account' && <Account classes={classes} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
       </main>
 

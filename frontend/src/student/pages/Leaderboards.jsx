@@ -1,7 +1,7 @@
 import { STUDENT, CLASSMATES, money } from '../data'
 
 export default function Leaderboards({ total }) {
-  const rows = [...CLASSMATES, { name: STUDENT.name, value: total, you: true }]
+  const rows = [...CLASSMATES, { name: STUDENT.fullName, value: total, you: true }]
     .sort((a, b) => b.value - a.value)
   return (
     <>
