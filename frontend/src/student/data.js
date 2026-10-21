@@ -3,7 +3,7 @@
 // so the teacher dashboard shows the same people.
 import {
   CLASS_NAME, CURRENT_STUDENT_ID, LESSONS as CLASS_LESSONS, ROSTER, STOCK_PRICES,
-  STARTING_CASH, getLevelInfo, portfolioValue,
+  STARTING_CASH, portfolioValue,
 } from '../shared/mockData'
 
 export { STARTING_CASH }
@@ -16,24 +16,25 @@ const shortDate = (iso) =>
 export const STUDENT = {
   name: firstName(ME.name),
   fullName: ME.name,
-  xp: ME.xp,
-  ...getLevelInfo(ME.xp),
-  coins: 120,
   className: CLASS_NAME,
 }
 
 export const STOCKS = STOCK_PRICES
 
+// results = quiz scores earned this session, { lessonId: percent }, on top of what ME already finished.
 // status: 'done' (quiz score kept), 'next' (the first unfinished lesson), or 'todo'
-let nextTaken = false
-export const LESSONS = CLASS_LESSONS.map((l, i) => {
-  const base = { id: l.id, title: l.title, xp: l.xp, due: shortDate(l.due) }
-  const result = ME.progress[i]
-  if (typeof result === 'number') return { ...base, status: 'done', score: result }
-  const status = nextTaken ? 'todo' : 'next'
-  nextTaken = true
-  return { ...base, status }
-})
+export function getLessons(results = {}) {
+  let nextTaken = false
+  return CLASS_LESSONS.map((l, i) => {
+    const base = { id: l.id, title: l.title, xp: l.xp, due: shortDate(l.due) }
+    const saved = typeof ME.progress[i] === 'number' ? ME.progress[i] : null
+    const score = results[l.id] ?? saved
+    if (score !== null) return { ...base, status: 'done', score }
+    const status = nextTaken ? 'todo' : 'next'
+    nextTaken = true
+    return { ...base, status }
+  })
+}
 
 export const QUESTS = [
   { id: 1, text: 'Finish one lesson', done: 0, goal: 1, reward: '25 XP' },
@@ -54,9 +55,9 @@ export const ACHIEVEMENTS = [
 export const CLASSES_DB = { 'BRD-4821': CLASS_NAME, 'BRD-7310': 'Economics, Period 5' }
 
 export const ASSIGNED = [
-  { id: 1, title: 'Diversification', type: 'Lesson', due: 'Oct 22', go: 'lessons' },
-  { id: 2, title: 'Diversification quiz', type: 'Quiz', due: 'Oct 22', go: 'lessons' },
-  { id: 3, title: 'Bull and bear markets', type: 'Lesson', due: 'Oct 29', go: 'lessons' },
+  { id: 1, lessonId: 3, title: 'Diversification', type: 'Lesson', due: 'Oct 22', go: 'lessons' },
+  { id: 2, lessonId: 3, title: 'Diversification quiz', type: 'Quiz', due: 'Oct 22', go: 'lessons' },
+  { id: 3, lessonId: 4, title: 'Bull and bear markets', type: 'Lesson', due: 'Oct 29', go: 'lessons' },
   { id: 4, title: 'Hold 3 different stocks', type: 'Practice', due: 'Nov 1', go: 'stocks' },
 ]
 

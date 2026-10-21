@@ -6,7 +6,7 @@ import TeacherApp from './teacher/TeacherApp'
 
 // Prototype only: this will come from the backend session after login.
 // Change role to 'teacher' to preview the teacher side.
-const DEMO_USER = { name: 'Alex', role: 'teacher' }
+const DEMO_USER = { name: 'Alex', role: 'student' }
 
 export default function App() {
   const [user, setUser] = useState(DEMO_USER)

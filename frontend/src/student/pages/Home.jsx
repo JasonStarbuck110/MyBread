@@ -1,8 +1,11 @@
 import LevelRing from '../components/LevelRing'
-import { STUDENT, LESSONS, QUESTS, ASSIGNED, money } from '../data'
+import { STUDENT, QUESTS, ASSIGNED, money } from '../data'
+import { getLevelInfo } from '../../shared/mockData'
 
-export default function Home({ total, cash, setPage, classes, onJoin }) {
-  const next = LESSONS.find((l) => l.status === 'next')
+export default function Home({ total, cash, xp, lessons, setPage, onOpenLesson, classes, onJoin }) {
+  const next = lessons.find((l) => l.status === 'next')
+  const { level, xpNext } = getLevelInfo(xp)
+  const assigned = ASSIGNED.filter((a) => !a.lessonId || lessons.find((l) => l.id === a.lessonId)?.status !== 'done')
   return (
     <>
       <header className="page-head head-row">
@@ -14,11 +17,11 @@ export default function Home({ total, cash, setPage, classes, onJoin }) {
       </header>
 
       <section className="hero">
-        <LevelRing level={STUDENT.level} xp={STUDENT.xp} xpNext={STUDENT.xpNext} />
+        <LevelRing level={level} xp={xp} xpNext={xpNext} />
         <div className="hero-body">
-          <h2>{STUDENT.xpNext - STUDENT.xp} XP to level {STUDENT.level + 1}</h2>
+          <h2>{xpNext - xp} XP to level {level + 1}</h2>
           <p>Finish "{next.title}" to earn {next.xp} XP and move closer.</p>
-          <button className="btn" onClick={() => setPage('lessons')}>Continue lesson</button>
+          <button className="btn" onClick={() => onOpenLesson(next.id)}>Continue lesson</button>
         </div>
       </section>
 
@@ -49,7 +52,7 @@ export default function Home({ total, cash, setPage, classes, onJoin }) {
       <section className="panel">
         <h3>Assigned</h3>
         <ul className="list">
-          {ASSIGNED.map((a) => (
+          {assigned.map((a) => (
             <li key={a.id}>
               <div>
                 <strong>{a.title}</strong>

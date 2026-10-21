@@ -1,6 +1,6 @@
-import { LESSONS } from '../data'
+import { QUIZZES } from '../quizzes'
 
-export default function Lessons() {
+export default function Lessons({ lessons, onOpenLesson }) {
   const label = { done: 'Completed', next: 'Up next', todo: 'Not started' }
   return (
     <>
@@ -10,21 +10,24 @@ export default function Lessons() {
       </header>
       <section className="panel">
         <ul className="list lessons">
-          {LESSONS.map((l) => (
-            <li key={l.id}>
-              <div>
-                <strong>{l.title}</strong>
-                <div className="muted">
-                  {label[l.status]}
-                  {l.score ? `, quiz ${l.score}%` : `, due ${l.due}`}
+          {lessons.map((l) => {
+            const canOpen = Boolean(QUIZZES[l.id]) && l.status !== 'todo'
+            return (
+              <li key={l.id}>
+                <div>
+                  <strong>{l.title}</strong>
+                  <div className="muted">
+                    {label[l.status]}
+                    {l.score ? `, quiz ${l.score}%` : `, due ${l.due}`}
+                  </div>
                 </div>
-              </div>
-              <span className="reward">{l.xp} XP</span>
-              <button className={l.status === 'next' ? 'btn' : 'btn ghost'} disabled={l.status === 'todo'}>
-                {l.status === 'done' ? 'Review' : l.status === 'next' ? 'Start' : 'Locked'}
-              </button>
-            </li>
-          ))}
+                <span className="reward">{l.xp} XP</span>
+                <button className={l.status === 'next' ? 'btn' : 'btn ghost'} disabled={!canOpen} onClick={() => onOpenLesson(l.id)}>
+                  {l.status === 'done' ? 'Review' : l.status === 'next' ? (canOpen ? 'Start' : 'Coming soon') : 'Locked'}
+                </button>
+              </li>
+            )
+          })}
         </ul>
       </section>
     </>

@@ -1,6 +1,7 @@
 import { STUDENT } from '../data'
+import { getLevelInfo } from '../../shared/mockData'
 
-export default function Account({ classes, onJoin, onLogout }) {
+export default function Account({ classes, xp, onJoin, onLogout }) {
   return (
     <>
       <header className="page-head">
@@ -11,7 +12,7 @@ export default function Account({ classes, onJoin, onLogout }) {
         <dl className="profile">
           <dt>Name</dt><dd>{STUDENT.fullName}</dd>
           <dt>Role</dt><dd>Student</dd>
-          <dt>Level</dt><dd>{STUDENT.level}, {STUDENT.xp} XP</dd>
+          <dt>Level</dt><dd>{getLevelInfo(xp).level}, {xp} XP</dd>
         </dl>
       </section>
       <section className="panel">
