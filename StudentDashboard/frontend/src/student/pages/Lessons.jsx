@@ -1,0 +1,3 @@
+export default function Lessons({ lessons, onOpenLesson }) {
+  return <><header className="page-head"><h1>Lessons</h1><p>Complete each reading and pass the five-question review (4/5 correct).</p></header><section className="panel"><ul className="list lessons">{lessons.map(l=><li key={l.id}><div><strong>{l.title}</strong><div className="muted">{l.status === 'done' ? `Completed · ${l.score}%` : l.status === 'next' ? 'Up next' : 'Locked'}</div></div><span className="reward">{l.id===1?'$5':`${l.xp} XP`}</span><button className={l.status==='next'?'btn':'btn ghost'} disabled={l.status==='todo'} onClick={()=>onOpenLesson(l.id)}>{l.status==='done'?'Review':l.status==='next'?'Start':'Locked'}</button></li>)}</ul></section></>
+}
