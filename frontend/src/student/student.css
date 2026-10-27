@@ -33,3 +33,30 @@ tr.you td { background: var(--cream); font-weight: 700; }
 @media (max-width: 800px) {
   .hero { flex-direction: column; text-align: center; }
 }
+
+/* Stock history, integrated with the existing student dashboard palette. */
+.history-summary { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .5rem 1rem; margin: .65rem 0; }
+.history-value { font-size: clamp(1.35rem, 2.2vw, 2rem); }
+.history-ranges { flex-wrap: wrap; }
+.history-graph { width: 100%; }
+.history-graph svg { overflow: visible; touch-action: pan-y; }
+.stock-detail { margin: 1.2rem 0; }
+.stock-detail-head, .stock-detail-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; }
+.stock-detail-head h3 { margin-bottom: .15rem; }
+.stock-detail-actions { margin-top: 1rem; }
+.stock-symbol-button { background: transparent; border: 0; color: inherit; padding: 0; cursor: pointer; text-align: left; font: inherit; }
+.stock-symbol-button:hover, .stock-symbol-button:focus-visible { text-decoration: underline; }
+
+/* Discover, watchlist, and market snapshot */
+.investing-extras { margin: 1rem 0; }
+.investing-extras .picks li { gap: .65rem; flex-wrap: wrap; }
+.picks li { min-width: 0; }
+.picks li > div { min-width: 0; overflow-wrap: anywhere; }
+.stock-detail-actions .btn { max-width: 100%; }
+@media (max-width: 600px) {
+  .investing-extras { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .picks li { flex-wrap: wrap; align-items: center; gap: .5rem; }
+  .picks li > span { margin-left: auto; }
+  .stock-detail-head, .stock-detail-actions { align-items: flex-start; }
+  .stock-detail-actions { flex-direction: column; }
+}

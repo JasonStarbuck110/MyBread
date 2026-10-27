@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Home from './pages/Home'
 import Lessons from './pages/Lessons'
 import Stocks from './pages/Stocks'
@@ -11,6 +11,7 @@ import { LESSONS } from './lessonModule/catalog'
 import { loadProgress, saveProgress } from './lessonModule/progress'
 import JoinModal from './components/JoinModal'
 import { ME, STUDENT, STOCKS } from './data'
+import { fetchPortfolio } from './tradingApi'
 import { useLinks } from '../shared/useLinks'
 import logo from '../assets/logo.png'
 import './student.css'
@@ -28,6 +29,8 @@ export default function StudentApp({ onLogout }) {
   const [page, setPage] = useState('home')
   const [cash, setCash] = useState(ME.cash)
   const [holdings, setHoldings] = useState(Object.fromEntries(ME.holdings.map((h) => [h.ticker, h.shares])))
+  const [portfolioData, setPortfolioData] = useState(null)
+  const [portfolioError, setPortfolioError] = useState('')
   const [classes, setClasses] = useState([STUDENT.className])
   const [joinOpen, setJoinOpen] = useState(false)
   const [links] = useLinks()
@@ -35,8 +38,18 @@ export default function StudentApp({ onLogout }) {
   const [lessonProgress, setLessonProgress] = useState(loadProgress)
   const [quizId, setQuizId] = useState(null)
 
-  const stockValue = Object.entries(holdings).reduce((s, [t, sh]) => s + sh * STOCKS[t].price, 0)
-  const total = cash + stockValue
+  const refreshPortfolio = async () => {
+    try {
+      const data = await fetchPortfolio()
+      setPortfolioData(data)
+      setCash(data.cash)
+      setHoldings(data.holdings)
+      setPortfolioError('')
+    } catch (error) { setPortfolioError(error.message) }
+  }
+  useEffect(() => { refreshPortfolio() }, [])
+  const stockValue = portfolioData?.stockValue ?? Object.entries(holdings).reduce((s, [t, sh]) => s + sh * (STOCKS[t]?.price || 0), 0)
+  const total = portfolioData?.total ?? cash + stockValue
   const lessons = LESSONS.map((l,i) => {
     const progress = lessonProgress[l.id]
     const previousComplete = i === 0 || lessonProgress[LESSONS[i-1].id]?.passed
@@ -85,7 +98,7 @@ export default function StudentApp({ onLogout }) {
           <LessonView key={quizId} lesson={LESSONS.find(l => l.id === quizId)} progress={lessonProgress} onBack={() => setPage('lessons')} onResult={completeLesson} />
         )}
         {page === 'stocks' && (
-          <Stocks cash={cash} setCash={setCash} holdings={holdings} setHoldings={setHoldings} total={total} stockValue={stockValue} />
+          <Stocks cash={cash} holdings={holdings} total={total} stockValue={stockValue} gain={portfolioData?.gain} backendPrices={portfolioData?.prices} portfolioError={portfolioError} refreshPortfolio={refreshPortfolio} />
         )}
         {page === 'leaderboards' && <Leaderboards total={total} />}
         {page === 'achievements' && <Achievements />}

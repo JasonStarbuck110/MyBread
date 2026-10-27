@@ -10,7 +10,6 @@ const DEMO_USER = { name: 'Alex', role: 'student' }
 
 export default function App() {
   const [user, setUser] = useState(DEMO_USER)
-
   if (!user) return <Login onLogin={() => setUser(DEMO_USER)} />
 
   const logout = () => setUser(null)
