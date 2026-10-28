@@ -1,0 +1,73 @@
+.module-list { 
+    display: grid; 
+    gap: 12px; 
+}
+
+.module-card { 
+    border: 1px solid #d8d8d8; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    background: #fff; 
+}
+
+.module-heading { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    gap: 12px;
+    width: 100%; 
+    padding: 18px; 
+    background: transparent; 
+    border: 0; 
+    cursor: pointer; 
+    text-align: left; 
+    color: inherit; 
+    font: inherit; 
+}
+
+.module-heading span:first-child, .module-item span:first-child { 
+    display: grid; 
+    gap: 5px; 
+}
+.module-heading small, .module-item small { 
+    color: #62666c; 
+    font-size: .85rem; 
+}
+
+.module-contents { 
+    border-top: 1px solid #e5e5e5; 
+    padding: 8px 18px; 
+}
+
+.module-item { 
+    display: flex; 
+    align-items: center; 
+    justify-content: space-between; 
+    gap: 12px; 
+    padding: 12px 0; 
+    border-bottom: 1px solid #eee; 
+}
+
+.module-item:last-child { 
+    border-bottom: 0; 
+}
+
+.module-quiz { 
+    background: #f5e3d1; 
+    margin: 8px -8px; 
+    padding: 14px 8px; 
+    border-radius: 8px; 
+}
+
+.module-item button { 
+    flex-shrink: 0; 
+}
+
+@media(max-width: 600px) { 
+    .module-item { 
+        align-items: flex-start; 
+    } 
+    .module-item strong { 
+        font-size: .9rem; 
+    } 
+}

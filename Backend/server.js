@@ -16,6 +16,8 @@ const PORT = Number(process.env.PORT || 3001);
 
 app.use(express.json({limit: "8kb"}));
 
+app.use(require("./trading/moduleRewards"));
+
 if (process.env.NODE_ENV === "production") {
     throw new Error("Demo API Must Not Run In Production");
 }
@@ -116,7 +118,6 @@ app.post("/api/trades/sell", asyncRoute(async (req, res) => {
     });
 }));
 
-
 app.use((error, req, res, next) => {
     if (error.status !== 429) console.error(error);
     if (error.status === 429) {
@@ -139,7 +140,6 @@ app.use((error, req, res, next) => {
             : "Trading or market data operation failed"
     });
 });
-
 
 async function startServer() {
     try {

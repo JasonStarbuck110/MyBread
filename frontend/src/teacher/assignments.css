@@ -1,0 +1,52 @@
+.assignment-form{
+    display:grid;
+    grid-template-columns:
+        repeat(auto-fit,minmax(190px,1fr));
+    gap:14px;
+    margin:18px 0 26px;
+    padding:18px;
+    border:1px solid #ddd;
+    border-radius:10px
+}
+
+.assignment-form label{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    font-weight:600;
+    font-size:.9rem
+}
+
+.assignment-form input,.assignment-form select{
+    padding:10px;
+    border-radius:7px;
+    border:1px solid #aaa;
+    background:#fff;
+    color:#2a2d34;
+    min-width:0
+}
+
+.assignment-form button{
+    align-self:end
+}   
+
+.assignment-form p{
+    grid-column:1/-1
+}
+
+.assignment-note{
+    font-size:.88rem;
+    color:#655d54;
+    line-height:1.5
+}
+
+.assignment-list{
+    display:flex;
+    flex-direction:column;
+    gap:9px;
+    margin-top:14px
+}
+
+.assignment-row{display:flex;justify-content:space-between;align-items:center;gap:14px;border-bottom:1px solid #e6e0d9;padding:12px 0}
+.assignment-row .t-small{margin-top:6px}
+@media(max-width:600px){.assignment-row{align-items:flex-start;flex-direction:column}}

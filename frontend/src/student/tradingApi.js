@@ -1,4 +1,3 @@
-// Translate backend integer cents/millionth-shares into the existing UI dollar/share values.
 const SHARE_SCALE = 1_000_000
 
 async function request(path, options) {
@@ -39,4 +38,12 @@ export async function fetchHistory(range, symbol) {
 export async function searchStocks(query, signal) {
   const data = await request(`/search?q=${encodeURIComponent(query)}`, { signal })
   return data.results || []
+}
+
+export function creditModuleReward(moduleId, answers) {
+  return request('/rewards/module', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ moduleId, answers })
+  })
 }
