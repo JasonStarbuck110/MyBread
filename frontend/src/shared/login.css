@@ -13,6 +13,15 @@
 .show { position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%); background: none; border: 0; color: var(--green); font-weight: 700; cursor: pointer; padding: 0.25rem 0.5rem; }
 .remember { display: flex; align-items: center; gap: 0.5rem; margin: 0.75rem 0; font-size: 0.95rem; }
 .linkbtn { display: block; margin: 1rem auto 0; background: none; border: 0; color: var(--green); font-weight: 700; cursor: pointer; }
+.role-picker { border: 0; padding: 0; margin: 0.75rem 0; display: flex; gap: 0.5rem; }
+.role-picker legend { font-size: 0.9rem; margin-bottom: 0.25rem; padding: 0; color: var(--brown); }
+.role-picker label { flex: 1; text-align: center; padding: 0.55rem 0.7rem; border: 2px solid var(--tan); border-radius: 8px; background: var(--white); color: var(--ink); cursor: pointer; }
+.role-picker label.selected { background: var(--green); border-color: var(--green); color: var(--white); }
+.role-picker input { position: absolute; opacity: 0; pointer-events: none; }
+.role-picker label:has(input:focus-visible) { outline: 2px solid var(--brown); outline-offset: 2px; }
+.form-error { color: #B3261E; font-size: 0.9rem; margin: 0.35rem 0 0; }
+.switch-mode { text-align: center; margin: 1.25rem 0 0; font-size: 0.95rem; }
+.linkbtn.inline { display: inline; margin: 0; padding: 0; }
 @media (max-width: 800px) {
   .login { grid-template-columns: 1fr; }
   .login-art { padding: 1.5rem; }

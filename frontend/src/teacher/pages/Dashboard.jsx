@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import ProgressBar from '../components/ProgressBar'
+import CreateClassModal from '../components/CreateClassModal'
 import { teacher, lessons, students, STARTING_CASH } from '../data'
 import {
   formatMoney, formatChange, formatDate, daysAgoText, getInitials, percent, getQuizAverage,
@@ -6,6 +8,7 @@ import {
 } from '../helpers'
 
 export default function Dashboard({ setPage }) {
+  const [createOpen, setCreateOpen] = useState(false)
   const lessonIndex = getCurrentLesson()
   const lesson = lessons[lessonIndex]
   const summary = getLessonSummary(lessonIndex)
@@ -36,6 +39,7 @@ export default function Dashboard({ setPage }) {
           <h1>Welcome back, {teacher.name}</h1>
           <p>{teacher.className}, {students.length} students</p>
         </div>
+        <button className="t-btn t-btn-green" onClick={() => setCreateOpen(true)}>Create class</button>
       </div>
 
       <div className="t-banner">
@@ -126,6 +130,7 @@ export default function Dashboard({ setPage }) {
           )
         })}
       </div>
+      {createOpen && <CreateClassModal onClose={() => setCreateOpen(false)} />}
     </>
   )
 }
