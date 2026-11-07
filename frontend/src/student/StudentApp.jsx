@@ -13,7 +13,7 @@ import { hasCompletedMini, allMinisComplete } from './lessonModule/moduleProgres
 import './moduleStyles.css'
 import JoinModal from './components/JoinModal'
 import { joinClass } from '../shared/classes'
-import { ME, STOCKS } from './data'
+import { STOCKS } from './data'
 import { fetchPortfolio, creditModuleReward } from './tradingApi'
 import { useLinks } from '../shared/useLinks'
 import { loadAssignments } from '../shared/assignments'
@@ -35,8 +35,8 @@ const NAV = [
 
 export default function StudentApp({ user, token, onLogout }) {
   const [page, setPage] = useState('home')
-  const [cash, setCash] = useState(ME.cash)
-  const [holdings, setHoldings] = useState(Object.fromEntries(ME.holdings.map((h) => [h.ticker, h.shares])))
+  const [cash, setCash] = useState(0)
+  const [holdings, setHoldings] = useState({})
   const [portfolioData, setPortfolioData] = useState(null)
   const [portfolioError, setPortfolioError] = useState('')
   const [classes, setClasses] = useState([])

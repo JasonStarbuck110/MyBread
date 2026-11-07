@@ -19,6 +19,7 @@ const PORT = Number(process.env.PORT || 3001);
 const classesRoutes = require("./routes/classes");
 
 app.use(express.json({limit: "8kb"}));
+app.use("/api/student", require("./routes/studentTrading"));
 
 app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
