@@ -2,7 +2,7 @@ import LevelRing from '../components/LevelRing'
 import { STUDENT, QUESTS, ASSIGNED, money } from '../data'
 import { getLevelInfo } from '../../shared/mockData'
 
-export default function Home({ total, cash, xp, lessons, setPage, onOpenLesson, classes, onJoin }) {
+export default function Home({ user, total, cash, xp, lessons, setPage, onOpenLesson, classes, onJoin }) {
   const next = lessons.find((l) => l.status === 'next')
   const { level, xpNext } = getLevelInfo(xp)
   const assigned = ASSIGNED.filter((a) => !a.lessonId || lessons.find((l) => l.id === a.lessonId)?.status !== 'done')
@@ -10,7 +10,7 @@ export default function Home({ total, cash, xp, lessons, setPage, onOpenLesson, 
     <>
       <header className="page-head head-row">
         <div>
-          <h1>Good to see you, {STUDENT.name}</h1>
+          <h1>Good to see you, {user.name}</h1>
           <p>{classes.join(' and ')}</p>
         </div>
         <button className="btn" onClick={onJoin}>Join class</button>

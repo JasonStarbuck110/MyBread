@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { gradeLesson } from './progress'
 import '../quiz.css'
 
 export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, progress, walletStatus, onRetryWallet, onResult, onMiniComplete, onBack }) {
@@ -9,6 +8,7 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [submittedAnswers, setSubmittedAnswers] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   const screen = lesson.screens?.[sectionIndex]
   const check = screen?.checkQuestion
@@ -17,19 +17,24 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
   const pass = lesson.passingCorrect || Math.ceil(questions.length * 0.8)
   const goTop = () => window.scrollTo(0, 0)
 
-  const finish = () => {
+  const finish = async () => {
     const selected = questions.map((_, i) => answers[i])
+
     if (selected.some(answer => !Number.isInteger(answer))) return
+
+    setSubmittedAnswers(selected)
+    setError('')
+    setSubmitting(true)
+
     try {
-      const outcome = gradeLesson(lesson, selected, progress)
-      setSubmittedAnswers(selected)
-      setResult(outcome)
-      Promise.resolve(onResult(lesson.id, outcome, selected)).catch(err => {
-        setError(err.message || 'Could not process lesson completion')
-      })
-      setError('')
+      const serverResult = await onResult(lesson.id, selected)
+      setResult(serverResult)
       goTop()
-    } catch (err) { setError(err.message || 'Could not grade quiz') }
+    } catch (err) {
+      setError(err.message || 'Could not submit quiz')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const finishMini = () => {
@@ -84,7 +89,9 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
         {result.passed && (
           <>
             <p>
-              {result.earnedXp ? `Earned ${result.earnedXp} XP.` : 'Module XP already earned.'}
+              {result.xpAwarded > 0
+              ? `Earned ${result.xpAwarded} EXP.`
+              : 'EXP for this module has already been earned.'}
             </p>
             <p role="status" aria-live="polite">
               <strong>Investing wallet: </strong>
@@ -121,7 +128,8 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
         {error && <p role="alert">{error}</p>}
       <div style={{ padding: '0 24px 32px', display: 'flex', gap: 12 }}>
         <button className="q-primary-button" onClick={onBack}>← Modules</button>
-        <button className="q-primary-button" disabled={questions.some((_, i) => answers[i] === undefined)} onClick={finish}>Submit review</button>
+        <button className="q-primary-button" disabled={submitting || questions.some((_, i) => answers[i] === undefined)}
+          onClick={finish}>{submitting ? 'Submitting…' : 'Submit review'}</button>
       </div>
       </section>}
     </div>

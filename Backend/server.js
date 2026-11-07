@@ -11,10 +11,15 @@ const { getPortfolioHistory, getStockHistory } = require("./trading/portfolioHis
 const { configurationFor } = require("./trading/marketHistory");
 const { connectDatabase } = require("./database");
 const {initializeDemoPortfolio, loadPortfolio, updatePortfolio} = require("./trading/portfolioStore");
+const authRoutes = require("./routes/auth");
+const learningRoutes = require("./routes/learning");
 const app = express();
+app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3001);
 
 app.use(express.json({limit: "8kb"}));
+app.use("/api/auth", authRoutes);
+app.use("/api/learning", learningRoutes);
 
 app.use(require("./trading/moduleRewards"));
 
@@ -119,25 +124,47 @@ app.post("/api/trades/sell", asyncRoute(async (req, res) => {
 }));
 
 app.use((error, req, res, next) => {
-    if (error.status !== 429) console.error(error);
-    if (error.status === 429) {
-        return res.status(429).json({ error: "Market data rate limit reached. Please try again later." });
+    console.error(error);
+
+    if (res.headersSent) {
+        return next(error);
     }
+
+    if (error.status === 429) {
+        return res.status(429).json({
+            error: "Too many requests. Please try again later."
+        });
+    }
+
     if (error.name === "VersionError") {
         return res.status(409).json({
             error: "Portfolio changed. Please retry the transaction."
         });
     }
 
-    const clientError =
-        error.message.startsWith("Invalid") ||
-        error.message.startsWith("Insufficient") ||
-        error.message.startsWith("Investment Amount");
+    if (error.name === "ValidationError") {
+        return res.status(400).json({
+            error: "Invalid request data"
+        });
+    }
 
-    res.status(clientError ? 400 : 502).json({
+    if (error.code === 11000) {
+        return res.status(409).json({
+            error: "A record with that information already exists"
+        });
+    }
+
+    const message = error.message || "";
+
+    const clientError =
+        message.startsWith("Invalid") ||
+        message.startsWith("Insufficient") ||
+        message.startsWith("Investment Amount");
+
+    res.status(clientError ? 400 : 500).json({
         error: clientError
-            ? error.message
-            : "Trading or market data operation failed"
+            ? message
+            : "An unexpected server error occurred"
     });
 });
 

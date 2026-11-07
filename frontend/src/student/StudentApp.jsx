@@ -20,6 +20,7 @@ import { issueAssignmentRewards, loadRewardClaims, rewardTotals, REWARDS_EVENT }
 import { CURRENT_STUDENT_ID } from '../shared/mockData'
 import logo from '../assets/logo.png'
 import './student.css'
+import { fetchLearningProgress, submitLessonAttempt } from './learningApi'
 
 const NAV = [
   ['home', 'Dashboard'],
@@ -30,7 +31,7 @@ const NAV = [
   ['links', 'Links'],
 ]
 
-export default function StudentApp({ onLogout }) {
+export default function StudentApp({ user, token, onLogout }) {
   const [page, setPage] = useState('home')
   const [cash, setCash] = useState(ME.cash)
   const [holdings, setHoldings] = useState(Object.fromEntries(ME.holdings.map((h) => [h.ticker, h.shares])))
@@ -39,7 +40,7 @@ export default function StudentApp({ onLogout }) {
   const [classes, setClasses] = useState([STUDENT.className])
   const [joinOpen, setJoinOpen] = useState(false)
   const [links] = useLinks()
-  const [xp, setXp] = useState(ME.xp)
+  const [xp, setXp] = useState(0)
   const [teacherRewardTotals, setTeacherRewardTotals] = useState(() => rewardTotals(loadRewardClaims(), CURRENT_STUDENT_ID))
   useEffect(() => {
     const sync = () => setTeacherRewardTotals(rewardTotals(loadRewardClaims(), CURRENT_STUDENT_ID))
@@ -47,11 +48,79 @@ export default function StudentApp({ onLogout }) {
     window.addEventListener('storage', sync)
     return () => { window.removeEventListener(REWARDS_EVENT, sync); window.removeEventListener('storage', sync) }
   }, [])
-  const [lessonProgress, setLessonProgress] = useState(loadProgress)
+  const [lessonProgress, setLessonProgress] = useState({})
+  const [progressLoading, setProgressLoading] = useState(true)
+  const [progressError, setProgressError] = useState('')
   const [quizId, setQuizId] = useState(null)
   const [miniProgress, setMiniProgress] = useState(loadMiniProgress)
   const [lessonTarget, setLessonTarget] = useState({ mode: 'mini', sectionIndex: 0 })
   const [walletRewardStatus, setWalletRewardStatus] = useState({})
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadServerProgress = async () => {
+      setProgressLoading(true)
+      setProgressError('')
+
+      try {
+        const data = await fetchLearningProgress(token)
+
+        if (cancelled) return
+
+        setXp(data.totalExp ?? 0)
+
+        const savedProgress = {}
+        for (const completion of data.completedLessons || []) {
+          savedProgress[Number(completion.lessonId)] = {
+            passed: true,
+            score: 100
+          }
+        }
+
+        setLessonProgress(savedProgress)
+        saveProgress(savedProgress)
+      } catch (error) {
+        if (!cancelled) {
+          setProgressError(error.message || 'Could not load lesson progress')
+        }
+      } finally {
+        if (!cancelled) setProgressLoading(false)
+      }
+    }
+
+    loadServerProgress()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
+
+  useEffect(() => {
+  const loadStudentAccount = async () => {
+    try {
+      const response = await fetch('/api/auth/me', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Could not load student account')
+      }
+
+      setXp(data.progress?.totalExp ?? 0)
+    } catch (error) {
+      console.error('Student account loading failed:', error)
+    }
+  }
+
+  if (token) {
+    loadStudentAccount()
+  }
+}, [token])
 
   const refreshPortfolio = async () => {
     try {
@@ -166,9 +235,25 @@ export default function StudentApp({ onLogout }) {
     }
   }
 
-  const completeLesson = async (id, result, selectedAnswers) => {
+  const completeLesson = async (id, selectedAnswers) => {
+    // Submit answers to the backend. The server grades the quiz
+    // and decides whether EXP can be awarded.
+    const result = await submitLessonAttempt(token, id, selectedAnswers)
+
+    // Always use the EXP total returned by MongoDB.
+    setXp(result.progress?.totalExp ?? 0)
+
+    // Keep the existing browser progress cache in sync for now.
     setLessonProgress(previous => {
-      const next = { ...previous, [id]: result.record }
+      const next = {
+        ...previous,
+        [id]: {
+          ...(previous[id] || {}),
+          passed: Boolean(result.passed || previous[id]?.passed),
+          score: result.percent
+        }
+      }
+
       saveProgress(next)
       return next
     })
@@ -176,14 +261,12 @@ export default function StudentApp({ onLogout }) {
     if (result.passed) {
       awardTeacherRewards(id, 'quiz')
       awardTeacherRewards(id, 'module')
+
+      // Keep the existing cash wallet reward separate from EXP.
+      await claimModuleWalletReward(id, selectedAnswers)
     }
 
-    if (result.earnedXp) {
-      setXp(value => value + result.earnedXp)
-    }
-
-    if (!result.passed) return null
-    return claimModuleWalletReward(id, selectedAnswers)
+    return result
   }
 
   const navBtn = ([id, label]) => (
@@ -203,7 +286,7 @@ export default function StudentApp({ onLogout }) {
         <div className="side-bottom">{navBtn(['account', 'Account'])}</div>
       </aside>
       <main className="main">
-        {page === 'home' && <Home total={total} cash={cash} xp={xp} lessons={lessons} setPage={setPage} onOpenLesson={openLesson} classes={classes} onJoin={() => setJoinOpen(true)} />}
+        {page === 'home' && <Home user={user} total={total} cash={cash} xp={xp} lessons={lessons} setPage={setPage} onOpenLesson={openLesson} classes={classes} onJoin={() => setJoinOpen(true)} />}
         {page === 'lessons' && <Lessons lessons={lessons} miniProgress={miniProgress} onOpenLesson={openLesson} onOpenMini={openMini} onOpenQuiz={openQuiz} />}
         {page === 'quiz' && quizId && (
           <LessonView key={`${quizId}-${lessonTarget.mode}-${lessonTarget.sectionIndex}`} lesson={LESSONS.find(l => l.id === quizId)} mode={lessonTarget.mode} sectionIndex={lessonTarget.sectionIndex} progress={lessonProgress} walletStatus={walletRewardStatus[quizId]} onRetryWallet={claimModuleWalletReward} onMiniComplete={completeMini} onBack={() => setPage('lessons')} onResult={completeLesson} />
