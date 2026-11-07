@@ -207,18 +207,16 @@ app.use((error, req, res, next) => {
     });
 });
 
+
 async function startServer() {
     try {
         await connectDatabase();
-        await initializeDemoPortfolio();
 
-        app.listen(PORT, "127.0.0.1", () => {
-            console.log(
-                `MyBread Trading API: http://127.0.0.1:${PORT}`
-            );
+        app.listen(PORT, "0.0.0.0", () => {
+            console.log(`MyBread API listening on port ${PORT}`);
         });
     } catch (error) {
-        console.error("Server Startup Failed:", error);
+        console.error("Server startup failed:", error);
         process.exitCode = 1;
     }
 }
