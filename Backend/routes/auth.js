@@ -2,16 +2,28 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
-const rateLimit = require("express-rate-limit");
 const { authenticateToken } = require("../middleware/auth");
 const StudentProgress = require("../models/StudentProgress");
-
 const router = express.Router();
+const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 10,
     standardHeaders: "draft-8",
     legacyHeaders: false,
+
+    keyGenerator: (req) => {
+        const ip = req.get("cf-connecting-ip") || req.ip;
+
+        if (!ip) {
+            const error = new Error("Client IP unavailable");
+            error.status = 503;
+            throw error;
+        }
+
+        return ipKeyGenerator(ip);
+    },
+
     message: {
         error: "Too many authentication attempts. Please try again later."
     }
