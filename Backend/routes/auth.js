@@ -29,7 +29,7 @@ router.post("/register", authLimiter, asyncRoute(async (req, res) => {
         typeof name !== "string" ||
         typeof email !== "string" ||
         typeof password !== "string" ||
-        !["student", "teacher"].includes(role)
+        role !== "student"
     ) {
         return res.status(400).json({
             error: "Invalid Registration Details"
