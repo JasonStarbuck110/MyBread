@@ -8,7 +8,7 @@ import Links from './pages/Links'
 import StudentDrawer from './components/StudentDrawer'
 import { students } from './data'
 import './teacher.css'
-import { fetchTeacherClasses, createClass, fetchClassStudents } from '../shared/classes'
+import { fetchTeacherClasses } from '../shared/classes'
 import Classes from './pages/Classes'
 
 const NAV = [

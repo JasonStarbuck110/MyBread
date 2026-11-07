@@ -8,12 +8,12 @@ import Links from './pages/Links'
 import Account from './pages/Account'
 import LessonView from './lessonModule/LessonView'
 import { LESSONS } from './lessonModule/catalog'
-import { loadProgress, saveProgress } from './lessonModule/progress'
+import { saveProgress } from './lessonModule/progress'
 import { hasCompletedMini, allMinisComplete } from './lessonModule/moduleProgress'
 import './moduleStyles.css'
 import JoinModal from './components/JoinModal'
 import { joinClass } from '../shared/classes'
-import { ME, STUDENT, STOCKS } from './data'
+import { ME, STOCKS } from './data'
 import { fetchPortfolio, creditModuleReward } from './tradingApi'
 import { useLinks } from '../shared/useLinks'
 import { loadAssignments } from '../shared/assignments'
@@ -40,8 +40,8 @@ export default function StudentApp({ user, token, onLogout }) {
   const [portfolioData, setPortfolioData] = useState(null)
   const [portfolioError, setPortfolioError] = useState('')
   const [classes, setClasses] = useState([])
-  const [classesError, setClassesError] = useState('')
-  const [classesLoading, setClassesLoading] = useState(true)
+  const [, setClassesError] = useState('')
+  const [, setClassesLoading] = useState(true)
   const [joinOpen, setJoinOpen] = useState(false)
   const [links] = useLinks()
   const [xp, setXp] = useState(0)
@@ -53,8 +53,8 @@ export default function StudentApp({ user, token, onLogout }) {
     return () => { window.removeEventListener(REWARDS_EVENT, sync); window.removeEventListener('storage', sync) }
   }, [])
   const [lessonProgress, setLessonProgress] = useState({})
-  const [progressLoading, setProgressLoading] = useState(true)
-  const [progressError, setProgressError] = useState('')
+  const [, setProgressLoading] = useState(true)
+  const [, setProgressError] = useState('')
   const [quizId, setQuizId] = useState(null)
   const [miniProgress, setMiniProgress] = useState({})
   const [lessonTarget, setLessonTarget] = useState({ mode: 'mini', sectionIndex: 0 })

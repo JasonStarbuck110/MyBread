@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import '../quiz.css'
 
-export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, progress, walletStatus, onRetryWallet, onResult, onMiniComplete, onBack }) {
+export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, walletStatus, onRetryWallet, onResult, onMiniComplete, onBack }) {
   const [phase, setPhase] = useState('reading')
   const [choice, setChoice] = useState(null)
   const [answers, setAnswers] = useState({})

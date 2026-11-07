@@ -10,17 +10,15 @@ const dateLabel = (value, range) => new Intl.DateTimeFormat(undefined,
 
 export default function PriceHistoryChart({ symbol, total, refreshKey }) {
   const [range, setRange] = useState('1M')
-  const [points, setPoints] = useState([])
+  const requestKey = JSON.stringify([range, symbol, refreshKey])
+  const [history, setHistory] = useState({ key: null, points: [], error: '' })
   const [selected, setSelected] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const loading = history.key !== requestKey
+  const points = loading ? [] : history.points
+  const error = loading ? '' : history.error
   const gradientId = useId().replaceAll(':', '')
   useEffect(() => {
     let active = true
-    setLoading(true)
-    setError('')
-    setPoints([])
-    setSelected(null)
     fetchHistory(range, symbol).then(data => {
       if (!active) return
       const parsed = (data.points || []).map(p => ({
@@ -28,11 +26,12 @@ export default function PriceHistoryChart({ symbol, total, refreshKey }) {
         value: Number((symbol ? p.priceCents : p.totalValueCents) / 100)
       })).filter(p => Number.isFinite(p.value) && p.value >= 0 && Number.isFinite(Date.parse(p.timestamp)))
         .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
-      setPoints(parsed)
-    }).catch(err => { if (active) setError(err.message) })
-      .finally(() => { if (active) setLoading(false) })
+      setHistory({ key: requestKey, points: parsed, error: '' })
+    }).catch(err => {
+      if (active) setHistory({ key: requestKey, points: [], error: err.message || 'History unavailable.' })
+    })
     return () => { active = false }
-  }, [range, symbol, refreshKey])
+  }, [range, symbol, refreshKey, requestKey])
 
   const first = points[0]
   const last = points.at(-1)
@@ -67,7 +66,7 @@ export default function PriceHistoryChart({ symbol, total, refreshKey }) {
     </div>
     <div className="tabs history-ranges" role="group" aria-label="Historical price range">
       {RANGES.map(r => <button type="button" key={r} aria-pressed={range === r}
-        className={range === r ? 'tab on' : 'tab'} onClick={() => setRange(r)}>{r}</button>)}
+        className={range === r ? 'tab on' : 'tab'} onClick={() => { setRange(r); setSelected(null) }}>{r}</button>)}
     </div>
     {loading && <p className="muted" role="status">Loading historical prices…</p>}
     {!loading && error && <p className="loss" role="alert">Historical prices unavailable: {error}</p>}

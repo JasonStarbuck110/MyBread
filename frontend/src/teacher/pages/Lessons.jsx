@@ -45,7 +45,7 @@ export default function Lessons({ notify }) {
     if (!/^\d+(?:\.\d{1,2})?$/.test(rewardCash) || !Number.isFinite(cash) || cash > 100000) return setError('Simulated cash must be between $0 and $100,000 (two decimal places maximum).')
     if (xp === 0 && cash === 0) return setError('Choose at least one nonzero reward.')
     const assignment = {
-      id: globalThis.crypto?.randomUUID?.() || `demo-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: globalThis.crypto.randomUUID(),
       moduleId: selectedModule.id,
       kind,
       sectionIndex: kind === 'mini' ? Number(sectionIndex) : null,

@@ -7,13 +7,14 @@ import TeacherApp from './teacher/TeacherApp'
 export default function App() {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
-  const [checkingAuth, setCheckingAuth] = useState(true)
+  const [checkingAuth, setCheckingAuth] = useState(
+    () => Boolean(sessionStorage.getItem('mybread_token'))
+  )
 
   useEffect(() => {
     const savedToken = sessionStorage.getItem('mybread_token')
 
     if (!savedToken) {
-      setCheckingAuth(false)
       return
     }
 

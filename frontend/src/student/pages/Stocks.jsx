@@ -29,12 +29,12 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
   useEffect(() => { try { localStorage.setItem('mybread:watchlist:v1', JSON.stringify(watchlist)) } catch { /* blocked storage */ } }, [watchlist])
   useEffect(() => {
     const term = query.trim()
-    if (term.length < 2) { setRemoteResults([]); setSearchError(''); setSearching(false); return }
+    if (term.length < 2) return
     const controller = new AbortController()
     const timeout = setTimeout(() => {
       setSearching(true)
       searchStocks(term, controller.signal)
-        .then(results => { setRemoteResults(results); setSearchError('') })
+        .then(results => { if (!controller.signal.aborted) { setRemoteResults(results); setSearchError('') } })
         .catch(e => { if (e.name !== 'AbortError') setSearchError(e.message) })
         .finally(() => { if (!controller.signal.aborted) setSearching(false) })
     }, 650)
@@ -203,7 +203,12 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
           <h3>Discover stocks</h3>
           <label className="field">
             <span>Search by ticker or company</span>
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Try AAPL or Microsoft" />
+            <input value={query} onChange={(e) => {
+              setQuery(e.target.value)
+              setRemoteResults([])
+              setSearchError('')
+              setSearching(false)
+            }} placeholder="Try AAPL or Microsoft" />
           </label>
           <ul className="list picks">
             {matches.length === 0 && !searching && <li className="muted">No matches. Try a different ticker.</li>}

@@ -40,37 +40,34 @@ function chartPoints(raw) {
 export default function PortfolioChart({ total }) {
   const [range, setRange] = useState('1D')
   const [view, setView] = useState('value')
-  const [points, setPoints] = useState([])
+  // Associate each asynchronous response with its requested range and value.
+  // A new request displays loading immediately without synchronously setting
+  // component state inside the effect.
+  const requestKey = JSON.stringify([range, total])
+  const [history, setHistory] = useState({ key: null, points: [], error: '' })
   const [hoverIndex, setHoverIndex] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const loading = history.key !== requestKey
+  const points = loading ? [] : history.points
+  const error = loading ? '' : history.error
 
   useEffect(() => {
     let mounted = true
-    setLoading(true)
-    setError('')
-    setHoverIndex(null)
 
     fetchHistory(range)
       .then((response) => {
-        if (mounted) setPoints(chartPoints(response.points))
+        if (mounted) setHistory({ key: requestKey, points: chartPoints(response.points), error: '' })
       })
       .catch((err) => {
-        if (mounted) {
-          setPoints([])
-          setError(err?.message || 'Unable to load portfolio history.')
-        }
-      })
-      .finally(() => {
-        if (mounted) setLoading(false)
+        if (mounted) setHistory({ key: requestKey, points: [], error: err?.message || 'Unable to load portfolio history.' })
       })
 
     return () => { mounted = false }
-  }, [range, total])
+  }, [range, total, requestKey])
 
   const first = points[0]
   const last = points[points.length - 1]
-  const inspected = hoverIndex === null ? last : points[hoverIndex]
+  const activeHoverIndex = hoverIndex !== null && hoverIndex < points.length ? hoverIndex : null
+  const inspected = activeHoverIndex === null ? last : points[activeHoverIndex]
   const hasHistory = points.length > 1
   const gainChange = first && inspected ? inspected.gain - first.gain : 0
   const fundingChange = first && inspected ? inspected.funding - first.funding : 0
@@ -120,7 +117,7 @@ export default function PortfolioChart({ total }) {
           )}
         </p>
         <p className="portfolio-overview-inspection" aria-live="off">
-          {hoverIndex !== null && inspected ? dateLabel(inspected.timestamp, range) : '\u00a0'}
+          {activeHoverIndex !== null && inspected ? dateLabel(inspected.timestamp, range) : '\u00a0'}
         </p>
       </header>
       {loading && (
@@ -166,11 +163,11 @@ export default function PortfolioChart({ total }) {
               fill="none"
               vectorEffect="non-scaling-stroke"
             />
-            {hoverIndex !== null && (
+            {activeHoverIndex !== null && (
               <g>
                 <line
-                  x1={toX(hoverIndex)}
-                  x2={toX(hoverIndex)}
+                  x1={toX(activeHoverIndex)}
+                  x2={toX(activeHoverIndex)}
                   y1={TOP}
                   y2={BOTTOM}
                   stroke="currentColor"
@@ -179,7 +176,7 @@ export default function PortfolioChart({ total }) {
                 />
                 <circle
                   cx={toX(hoverIndex)}
-                  cy={toY(amounts[hoverIndex])}
+                  cy={toY(amounts[activeHoverIndex])}
                   r="5"
                   fill={chartColor}
                   stroke="white"
@@ -197,7 +194,7 @@ export default function PortfolioChart({ total }) {
             type="button"
             className={range === option ? 'is-active' : ''}
             aria-pressed={range === option}
-            onClick={() => setRange(option)}
+            onClick={() => { setRange(option); setHoverIndex(null) }}
           >
             {option}
           </button>

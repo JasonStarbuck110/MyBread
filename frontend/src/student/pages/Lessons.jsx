@@ -4,7 +4,7 @@ import { CURRENT_STUDENT_ID } from '../../shared/mockData'
 import { rewardTotals, loadRewardClaims, REWARDS_EVENT } from '../../shared/assignmentRewards'
 import { allMinisComplete, hasCompletedMini, moduleMiniCount } from '../lessonModule/moduleProgress'
 
-export default function Lessons({ lessons, miniProgress, onOpenLesson, onOpenMini, onOpenQuiz }) {
+export default function Lessons({ lessons, miniProgress, onOpenMini, onOpenQuiz }) {
   const [openModules, setOpenModules] = useState([1])
   const [assignments, setAssignments] = useState(loadAssignments)
   const [claims, setClaims] = useState(loadRewardClaims)

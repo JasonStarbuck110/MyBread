@@ -1,5 +1,5 @@
 import LevelRing from '../components/LevelRing'
-import { STUDENT, QUESTS, ASSIGNED, money } from '../data'
+import { QUESTS, ASSIGNED, money } from '../data'
 import { getLevelInfo } from '../../shared/mockData'
 
 export default function Home({ user, total, cash, xp, lessons, setPage, onOpenLesson, classes, onJoin }) {
