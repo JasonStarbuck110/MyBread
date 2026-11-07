@@ -64,6 +64,21 @@ export default function App() {
     setUser(data.user)
   }
 
+  const handleSignup = async ({ name, email, password }) => {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role: 'student' })
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.error || 'Registration failed. Please try again.')
+    }
+
+    await handleLogin({ email, password })
+  }
+
   const logout = () => {
     sessionStorage.removeItem('mybread_token')
     setUser(null)
@@ -75,7 +90,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <Login onLogin={handleLogin} />
+    return <Login onLogin={handleLogin} onSignup={handleSignup} />
   }
 
   if (user.role === 'teacher') {

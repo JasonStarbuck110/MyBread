@@ -2,27 +2,50 @@ import { useState } from 'react'
 import logo from '../assets/logo.png'
 import './login.css'
 
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onSignup }) {
   const [show, setShow] = useState(false)
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [mode, setMode] = useState('login') // 'login', 'signup' or 'forgot'
   const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const signup = mode === 'signup'
+  const forgot = mode === 'forgot'
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
+  const goTo = (next) => {
+    setShow(false)
+    setShowConfirm(false)
     setError('')
-    setLoading(true)
+    setMode(next)
+  }
 
+  const submit = async (e) => {
+    e.preventDefault()
+    if (submitting) return
+    const data = new FormData(e.currentTarget)
+    const email = data.get('email').trim()
+
+    if (forgot) {
+      setError('Password reset is not available yet. Contact your MyBread administrator.')
+      return
+    }
+
+    const password = data.get('password')
+    if (signup && password !== data.get('confirm')) {
+      setError("Passwords don't match.")
+      return
+    }
+    setError('')
+    setSubmitting(true)
     try {
-      await onLogin({
-        email: email.trim(),
-        password
-      })
+      if (signup) {
+        await onSignup({ name: data.get('name').trim(), email, password })
+      } else {
+        await onLogin({ email, password })
+      }
     } catch (err) {
-      setError(err.message || 'Unable to log in. Please try again.')
+      setError(err.message || 'Something went wrong. Please try again.')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
@@ -33,62 +56,54 @@ export default function Login({ onLogin }) {
         <h1>MyBread</h1>
         <p>Learn how money works by practicing with it.</p>
       </aside>
-
       <div className="login-form">
-        <form onSubmit={handleSubmit}>
-          <h2>Log in to your account</h2>
-          <p className="muted">with your registered Email Address</p>
-
-          <div className="field">
-            <label htmlFor="email">
-              <span>Email address</span>
-            </label>
-            <input
-              id="email"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="field">
-            <label htmlFor="password">
-              <span>Password</span>
-            </label>
-            <div className="pw">
-              <input
-                id="password"
-                type={show ? 'text' : 'password'}
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <button
-                type="button"
-                className="show"
-                onClick={() => setShow(!show)}
-              >
-                {show ? 'Hide' : 'Show'}
+        <form key={mode} onSubmit={submit}>
+          {forgot ? (
+            <>
+              <h2>Password reset</h2>
+              <p className="muted">Password reset is not available yet. Contact your MyBread administrator.</p>
+              <button type="button" className="linkbtn" onClick={() => goTo('login')}>Back to log in</button>
+            </>
+          ) : (
+            <>
+              <h2>{signup ? 'Create your Account' : 'Log in to your account'}</h2>
+              {signup && (
+                <div className="field">
+                  <label htmlFor="name"><span>Full name</span></label>
+                  <input id="name" name="name" type="text" autoComplete="name" />
+                </div>
+              )}
+              <div className="field">
+                <label htmlFor="email"><span>Email address</span></label>
+                <input id="email" name="email" type="email" autoComplete="email" />
+              </div>
+              <div className="field">
+                <label htmlFor="password"><span>Password</span></label>
+                <div className="pw">
+                  <input id="password" name="password" type={show ? 'text' : 'password'} autoComplete={signup ? 'new-password' : 'current-password'} />
+                  <button type="button" className="show" onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</button>
+                </div>
+              </div>
+              {signup && (
+                <div className="field">
+                  <label htmlFor="confirm"><span>Confirm password</span></label>
+                  <div className="pw">
+                    <input id="confirm" name="confirm" type={showConfirm ? 'text' : 'password'} autoComplete="new-password" onChange={() => setError('')} />
+                    <button type="button" className="show" onClick={() => setShowConfirm(!showConfirm)}>{showConfirm ? 'Hide' : 'Show'}</button>
+                  </div>
+                </div>
+              )}
+              {error && <p className="form-error" role="alert">{error}</p>}
+              <button className="btn" type="submit" disabled={submitting}>
+                {submitting ? (signup ? 'Creating account…' : 'Logging in…') : (signup ? 'Sign up' : 'Log in')}
               </button>
-            </div>
-          </div>
-
-          {error && (
-            <p className="muted" role="alert">
-              {error}
-            </p>
+              {!signup && <button type="button" className="linkbtn" onClick={() => goTo('forgot')}>Forgot password?</button>}
+              <p className="switch-mode">
+                {signup ? 'Already have an account?' : "Don't have an account?"}{' '}
+                <button type="button" className="linkbtn inline" onClick={() => goTo(signup ? 'login' : 'signup')}>{signup ? 'Sign In' : 'Sign Up'}</button>
+              </p>
+            </>
           )}
-
-          <button className="btn" type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Log in'}
-          </button>
-
-          <button type="button" className="linkbtn" disabled>
-            Forgot password?
-          </button>
         </form>
       </div>
     </div>
