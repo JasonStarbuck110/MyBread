@@ -8,20 +8,26 @@ import Links from './pages/Links'
 import StudentDrawer from './components/StudentDrawer'
 import { students } from './data'
 import './teacher.css'
+import { fetchTeacherClasses, createClass, fetchClassStudents } from '../shared/classes'
+import Classes from './pages/Classes'
 
 const NAV = [
   ['dashboard', 'Dashboard'],
   ['students', 'Students'],
+  ['classes', 'Classes'],
   ['lessons', 'Lessons'],
   ['stocks', 'Stocks'],
   ['links', 'Links'],
 ]
 
-export default function TeacherApp({ onLogout }) {
+export default function TeacherApp({ user, token, onLogout }) {
   const [page, setPage] = useState('dashboard')
   const [selectedId, setSelectedId] = useState(null)
   const [message, setMessage] = useState('')
   const timer = useRef(null)
+  const [classes, setClasses] = useState([])
+  const [classesLoading, setClassesLoading] = useState(true)
+  const [classesError, setClassesError] = useState('')
 
   const student = students.find((s) => s.id === selectedId) || null
   const closeStudent = () => setSelectedId(null)
@@ -43,6 +49,27 @@ export default function TeacherApp({ onLogout }) {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadClasses = async () => {
+      try {
+        const data = await fetchTeacherClasses(token)
+        if (!cancelled) setClasses(data.classes || [])
+      } catch (error) {
+        if (!cancelled) setClassesError(error.message)
+      } finally {
+        if (!cancelled) setClassesLoading(false)
+      }
+    }
+
+    loadClasses()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   const shared = { openStudent: setSelectedId, notify }
 
@@ -66,7 +93,8 @@ export default function TeacherApp({ onLogout }) {
       </aside>
 
       <main className="main">
-        {page === 'dashboard' && <Dashboard setPage={goTo} {...shared} />}
+        {page === 'dashboard' && (<Dashboard user={user} classes={classes} classesLoading={classesLoading} classesError={classesError} setPage={goTo} />)}
+        {page === 'classes' && (<Classes token={token} classes={classes} setClasses={setClasses} classesLoading={classesLoading} classesError={classesError} />)}
         {page === 'students' && <Students {...shared} />}
         {page === 'lessons' && <Lessons {...shared} />}
         {page === 'stocks' && <Stocks {...shared} />}

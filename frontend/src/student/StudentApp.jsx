@@ -12,6 +12,7 @@ import { loadProgress, saveProgress } from './lessonModule/progress'
 import { hasCompletedMini, allMinisComplete } from './lessonModule/moduleProgress'
 import './moduleStyles.css'
 import JoinModal from './components/JoinModal'
+import { joinClass } from '../shared/classes'
 import { ME, STUDENT, STOCKS } from './data'
 import { fetchPortfolio, creditModuleReward } from './tradingApi'
 import { useLinks } from '../shared/useLinks'
@@ -21,6 +22,7 @@ import { CURRENT_STUDENT_ID } from '../shared/mockData'
 import logo from '../assets/logo.png'
 import './student.css'
 import { fetchLearningProgress, submitLessonAttempt, completeMiniLesson } from './learningApi'
+import { fetchEnrolledClasses } from '../shared/classes'
 
 const NAV = [
   ['home', 'Dashboard'],
@@ -37,7 +39,9 @@ export default function StudentApp({ user, token, onLogout }) {
   const [holdings, setHoldings] = useState(Object.fromEntries(ME.holdings.map((h) => [h.ticker, h.shares])))
   const [portfolioData, setPortfolioData] = useState(null)
   const [portfolioError, setPortfolioError] = useState('')
-  const [classes, setClasses] = useState([STUDENT.className])
+  const [classes, setClasses] = useState([])
+  const [classesError, setClassesError] = useState('')
+  const [classesLoading, setClassesLoading] = useState(true)
   const [joinOpen, setJoinOpen] = useState(false)
   const [links] = useLinks()
   const [xp, setXp] = useState(0)
@@ -55,6 +59,12 @@ export default function StudentApp({ user, token, onLogout }) {
   const [miniProgress, setMiniProgress] = useState({})
   const [lessonTarget, setLessonTarget] = useState({ mode: 'mini', sectionIndex: 0 })
   const [walletRewardStatus, setWalletRewardStatus] = useState({})
+  const handleJoinClass = async (enrollmentCode) => {
+    await joinClass(token, enrollmentCode)
+    const data = await fetchEnrolledClasses(token)
+    setClasses(data.classes || [])
+    setJoinOpen(false)
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -157,6 +167,35 @@ export default function StudentApp({ user, token, onLogout }) {
     return { ...l, status: progress?.passed ? 'done' : previousComplete ? 'next' : 'todo', score: progress?.score }
   })
   const activePage = page === 'quiz' ? 'lessons' : page
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadClasses = async () => {
+      setClassesLoading(true)
+      setClassesError('')
+
+      try {
+        const data = await fetchEnrolledClasses(token)
+
+        if (!cancelled) {
+          setClasses(data.classes || [])
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setClassesError(error.message || 'Could not load classes')
+        }
+      } finally {
+        if (!cancelled) setClassesLoading(false)
+      }
+    }
+
+    loadClasses()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   const openMini = (id, sectionIndex) => {
     const lesson = lessons.find(l => l.id === id)
@@ -317,7 +356,7 @@ export default function StudentApp({ user, token, onLogout }) {
         {page === 'links' && <Links links={links} />}
         {page === 'account' && <Account classes={classes} xp={xp + teacherRewardTotals.xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
       </main>
-      {joinOpen && <JoinModal classes={classes} setClasses={setClasses} onClose={() => setJoinOpen(false)} />}
+      {joinOpen && (<JoinModal classes={classes} onJoin={handleJoinClass} onClose={() => setJoinOpen(false)}/>)}
     </div>
   )
 }

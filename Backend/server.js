@@ -16,10 +16,12 @@ const learningRoutes = require("./routes/learning");
 const app = express();
 app.set("trust proxy", 1);
 const PORT = Number(process.env.PORT || 3001);
+const classesRoutes = require("./routes/classes");
 
 app.use(express.json({limit: "8kb"}));
 app.use("/api/auth", authRoutes);
 app.use("/api/learning", learningRoutes);
+app.use("/api/classes", classesRoutes);
 
 app.use(require("./trading/moduleRewards"));
 
