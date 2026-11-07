@@ -35,3 +35,23 @@ export async function submitLessonAttempt(token, lessonId, answers) {
 
   return data
 }
+
+export async function completeMiniLesson(token, lessonId, sectionIndex) {
+  const response = await fetch(
+    `/api/learning/lessons/${lessonId}/mini-lessons/${sectionIndex}/complete`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Could not save mini-lesson completion')
+  }
+
+  return data
+}

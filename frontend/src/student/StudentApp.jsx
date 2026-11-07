@@ -9,7 +9,7 @@ import Account from './pages/Account'
 import LessonView from './lessonModule/LessonView'
 import { LESSONS } from './lessonModule/catalog'
 import { loadProgress, saveProgress } from './lessonModule/progress'
-import { loadMiniProgress, saveMiniProgress, hasCompletedMini, allMinisComplete } from './lessonModule/moduleProgress'
+import { hasCompletedMini, allMinisComplete } from './lessonModule/moduleProgress'
 import './moduleStyles.css'
 import JoinModal from './components/JoinModal'
 import { ME, STUDENT, STOCKS } from './data'
@@ -20,7 +20,7 @@ import { issueAssignmentRewards, loadRewardClaims, rewardTotals, REWARDS_EVENT }
 import { CURRENT_STUDENT_ID } from '../shared/mockData'
 import logo from '../assets/logo.png'
 import './student.css'
-import { fetchLearningProgress, submitLessonAttempt } from './learningApi'
+import { fetchLearningProgress, submitLessonAttempt, completeMiniLesson } from './learningApi'
 
 const NAV = [
   ['home', 'Dashboard'],
@@ -52,7 +52,7 @@ export default function StudentApp({ user, token, onLogout }) {
   const [progressLoading, setProgressLoading] = useState(true)
   const [progressError, setProgressError] = useState('')
   const [quizId, setQuizId] = useState(null)
-  const [miniProgress, setMiniProgress] = useState(loadMiniProgress)
+  const [miniProgress, setMiniProgress] = useState({})
   const [lessonTarget, setLessonTarget] = useState({ mode: 'mini', sectionIndex: 0 })
   const [walletRewardStatus, setWalletRewardStatus] = useState({})
 
@@ -79,15 +79,28 @@ export default function StudentApp({ user, token, onLogout }) {
         }
 
         setLessonProgress(savedProgress)
-        saveProgress(savedProgress)
-      } catch (error) {
-        if (!cancelled) {
-          setProgressError(error.message || 'Could not load lesson progress')
+        const savedMiniProgress = {}
+
+        for (const completion of data.miniLessons || []) {
+          const lessonId = Number(completion.lessonId)
+
+          if (!savedMiniProgress[lessonId]) {
+            savedMiniProgress[lessonId] = {}
         }
-      } finally {
-        if (!cancelled) setProgressLoading(false)
+
+        savedMiniProgress[lessonId][completion.sectionIndex] = true
       }
-    }
+
+    setMiniProgress(savedMiniProgress)
+          saveProgress(savedProgress)
+        } catch (error) {
+          if (!cancelled) {
+            setProgressError(error.message || 'Could not load lesson progress')
+          }
+        } finally {
+          if (!cancelled) setProgressLoading(false)
+        }
+      }
 
     loadServerProgress()
 
@@ -179,12 +192,17 @@ export default function StudentApp({ user, token, onLogout }) {
     } catch (error) { console.warn('Teacher reward could not be stored locally', error) }
   }
 
-  const completeMini = (id, sectionIndex) => {
-    setMiniProgress(previous => {
-      const next = { ...previous, [id]: { ...(previous[id] || {}), [sectionIndex]: true } }
-      saveMiniProgress(next)
-      return next
-    })
+  const completeMini = async (id, sectionIndex) => {
+    await completeMiniLesson(token, id, sectionIndex)
+
+    setMiniProgress(previous => ({
+      ...previous,
+      [id]: {
+        ...(previous[id] || {}),
+        [sectionIndex]: true
+      }
+    }))
+
     awardTeacherRewards(id, 'mini', sectionIndex)
   }
 

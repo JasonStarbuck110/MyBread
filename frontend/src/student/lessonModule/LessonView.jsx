@@ -37,10 +37,20 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
     }
   }
 
-  const finishMini = () => {
+  const finishMini = async () => {
     if (check && !correct) return
-    onMiniComplete(lesson.id, sectionIndex)
-    onBack()
+
+    setError('')
+    setSubmitting(true)
+
+    try {
+      await onMiniComplete(lesson.id, sectionIndex)
+      onBack()
+    } catch (err) {
+      setError(err.message || 'Could not save mini-lesson completion')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return <div className="q-root">

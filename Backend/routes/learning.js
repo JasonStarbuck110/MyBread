@@ -2,12 +2,13 @@ const express = require("express");
 const mongoose = require("mongoose");
 
 const { authenticateToken, requireRole } = require("../middleware/auth");
-const { gradeLesson } = require("../learning/lessonCatalog");
+const { LESSON_CATALOG, gradeLesson } = require("../learning/lessonCatalog");
 
 const QuizAttempt = require("../models/QuizAttempt");
 const LessonCompletion = require("../models/LessonCompletion");
 const ExpTransaction = require("../models/ExpTransaction");
 const StudentProgress = require("../models/StudentProgress");
+const MiniLessonCompletion = require("../models/MiniLessonCompletion");
 
 const router = express.Router();
 const asyncRoute = fn => (req, res, next) => {
@@ -21,21 +22,94 @@ router.get(
     asyncRoute(async (req, res) => {
         const studentId = req.user.id;
 
-        const [progress, completions] = await Promise.all([
+        const [progress, completions, miniCompletions] = await Promise.all([
             StudentProgress.findOne({ studentId }).lean(),
+
             LessonCompletion.find({ studentId })
                 .select("lessonId expAwarded completedAt")
+                .lean(),
+
+            MiniLessonCompletion.find({ studentId })
+                .select("lessonId sectionIndex completedAt")
                 .lean()
         ]);
 
         return res.json({
             totalExp: progress?.totalExp ?? 0,
             level: progress?.level ?? 1,
+
             completedLessons: completions.map(completion => ({
                 lessonId: completion.lessonId,
                 expAwarded: completion.expAwarded,
                 completedAt: completion.completedAt
+            })),
+
+            miniLessons: miniCompletions.map(completion => ({
+                lessonId: completion.lessonId,
+                sectionIndex: completion.sectionIndex,
+                completedAt: completion.completedAt
             }))
+        });
+    })
+);
+
+router.post(
+    "/lessons/:lessonId/mini-lessons/:sectionIndex/complete",
+    authenticateToken,
+    requireRole("student"),
+    asyncRoute(async (req, res) => {
+        const studentId = req.user.id;
+        const lessonId = String(Number(req.params.lessonId));
+        const sectionIndex = Number(req.params.sectionIndex);
+
+        if (!LESSON_CATALOG[Number(lessonId)]) {
+            return res.status(400).json({ error: "Invalid lesson" });
+        }
+
+        if (
+            !Number.isSafeInteger(sectionIndex) ||
+            sectionIndex < 0 ||
+            sectionIndex > 20
+        ) {
+            return res.status(400).json({ error: "Invalid mini-lesson section" });
+        }
+
+        if (sectionIndex > 0) {
+            const previousCompletion = await MiniLessonCompletion.findOne({
+                studentId,
+                lessonId,
+                sectionIndex: sectionIndex - 1
+            });
+
+            if (!previousCompletion) {
+                return res.status(400).json({
+                    error: "Complete the previous mini-lesson first"
+                });
+            }
+        }
+
+        const completion = await MiniLessonCompletion.findOneAndUpdate(
+            { studentId, lessonId, sectionIndex },
+            {
+                $setOnInsert: {
+                    studentId,
+                    lessonId,
+                    sectionIndex,
+                    completedAt: new Date()
+                }
+            },
+            {
+                upsert: true,
+                new: true,
+                setDefaultsOnInsert: true
+            }
+        );
+
+        return res.json({
+            completed: true,
+            lessonId,
+            sectionIndex,
+            completedAt: completion.completedAt
         });
     })
 );
