@@ -36,14 +36,16 @@ export async function submitLessonAttempt(token, lessonId, answers) {
   return data
 }
 
-export async function completeMiniLesson(token, lessonId, sectionIndex) {
+export async function completeMiniLesson(token, lessonId, sectionIndex, answerIndex) {
   const response = await fetch(
     `/api/learning/lessons/${lessonId}/mini-lessons/${sectionIndex}/complete`,
     {
       method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`
-      }
+      },
+      body: JSON.stringify({ answerIndex })
     }
   )
 

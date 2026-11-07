@@ -63,3 +63,8 @@ export function creditModuleReward(moduleId) {
     body: JSON.stringify({ moduleId })
   })
 }
+
+// Claim all completed mini-lesson rewards once, including earlier progress.
+export function syncMiniRewards() {
+  return request('/rewards/minis/sync', { method: 'POST' })
+}

@@ -44,7 +44,7 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, wa
     setSubmitting(true)
 
     try {
-      await onMiniComplete(lesson.id, sectionIndex)
+      await onMiniComplete(lesson.id, sectionIndex, choice)
       onBack()
     } catch (err) {
       setError(err.message || 'Could not save mini-lesson completion')
@@ -88,10 +88,17 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, wa
           {check ? <fieldset style={{ border: 0 }}><legend style={{ fontWeight: 700, marginBottom: 12 }}>{check.question}</legend>{check.answers.map((answer, i) => <label key={i} className={'q-answer' + (choice === i ? ' q-selected' : '')} style={{ display: 'flex', gap: 10, margin: '8px 0' }}><input type="radio" name={`check-${lesson.id}-${sectionIndex}`} checked={choice === i} onChange={() => setChoice(i)}/>{answer}</label>)}</fieldset> : <p>No check question was provided for this mini-lesson.</p>}
           {choice !== null && <p role="status">{correct ? check.explanation : 'Not quite. Review the reading and try another answer.'}</p>}
         </div>
+        {error && (
+          <p role="alert" style={{ color: '#b91c1c', padding: '0 24px' }}>
+            {error}
+          </p>
+        )}
         <div style={{ padding: '0 24px 32px', display: 'flex', gap: 12 }}>
           <button className="q-primary-button" onClick={() => { setPhase('reading'); goTop() }}>← Reading</button>
-          <button className="q-primary-button" disabled={Boolean(check) && !correct} onClick={finishMini}>Complete mini-lesson →</button>
-        </div>
+          <button className="q-primary-button" disabled={submitting || (Boolean(check) && !correct)} onClick={finishMini}>
+            {submitting ? 'Saving...' : 'Complete mini-lesson →'}
+          </button>        
+      </div>
       </section> : result ? 
       <section className="q-completion-card" style={{ padding: 32 }}>
         <h1>{result.passed ? 'Module passed' : 'Try again'}</h1>

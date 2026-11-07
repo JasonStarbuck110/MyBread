@@ -14,7 +14,7 @@ import './moduleStyles.css'
 import JoinModal from './components/JoinModal'
 import { joinClass } from '../shared/classes'
 import { STOCKS } from './data'
-import { fetchPortfolio, creditModuleReward } from './tradingApi'
+import { fetchPortfolio, creditModuleReward, syncMiniRewards } from './tradingApi'
 import { useLinks } from '../shared/useLinks'
 import { loadAssignments } from '../shared/assignments'
 import { issueAssignmentRewards, loadRewardClaims, rewardTotals, REWARDS_EVENT } from '../shared/assignmentRewards'
@@ -39,6 +39,7 @@ export default function StudentApp({ user, token, onLogout }) {
   const [holdings, setHoldings] = useState({})
   const [portfolioData, setPortfolioData] = useState(null)
   const [portfolioError, setPortfolioError] = useState('')
+  const [miniRewardNotice, setMiniRewardNotice] = useState('')
   const [classes, setClasses] = useState([])
   const [, setClassesError] = useState('')
   const [, setClassesLoading] = useState(true)
@@ -74,7 +75,26 @@ export default function StudentApp({ user, token, onLogout }) {
       setProgressError('')
 
       try {
+        // Backfill earlier mini-lesson completions before reading EXP.
+        // The backend validates DB records and credits each only once.
+        let rewards = null
+        try {
+          rewards = await syncMiniRewards()
+        } catch (rewardError) {
+          if (!cancelled) setMiniRewardNotice(`Mini rewards could not sync: ${rewardError.message}`)
+        }
         const data = await fetchLearningProgress(token)
+        if (rewards?.awardedCount && !cancelled) {
+          setMiniRewardNotice(`Mini-lesson rewards: +$${(rewards.earnedCashCents / 100).toFixed(2)} and +${rewards.earnedXp} XP.`)
+          setCash(rewards.cashCents / 100)
+          // Refresh the market valuation after server-side backfill.
+          try {
+            const fresh = await fetchPortfolio()
+            if (!cancelled) { setPortfolioData(fresh); setCash(fresh.cash); setHoldings(fresh.holdings) }
+          } catch {
+            // The saved cash and EXP remain authoritative even if quotes fail.
+          }
+        }
 
         if (cancelled) return
 
@@ -119,31 +139,7 @@ export default function StudentApp({ user, token, onLogout }) {
     }
   }, [token])
 
-  useEffect(() => {
-  const loadStudentAccount = async () => {
-    try {
-      const response = await fetch('/api/auth/me', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Could not load student account')
-      }
-
-      setXp(data.progress?.totalExp ?? 0)
-    } catch (error) {
-      console.error('Student account loading failed:', error)
-    }
-  }
-
-  if (token) {
-    loadStudentAccount()
-  }
-}, [token])
 
   const refreshPortfolio = async () => {
     try {
@@ -231,8 +227,8 @@ export default function StudentApp({ user, token, onLogout }) {
     } catch (error) { console.warn('Teacher reward could not be stored locally', error) }
   }
 
-  const completeMini = async (id, sectionIndex) => {
-    await completeMiniLesson(token, id, sectionIndex)
+  const completeMini = async (id, sectionIndex, answerIndex) => {
+    await completeMiniLesson(token, id, sectionIndex, answerIndex)
 
     setMiniProgress(previous => ({
       ...previous,
@@ -242,6 +238,23 @@ export default function StudentApp({ user, token, onLogout }) {
       }
     }))
 
+    // A completed mini is saved independently: if payout fails, retrying
+    // will reconcile without granting duplicate rewards.
+    const reward = await syncMiniRewards()
+    setXp(reward.totalExp)
+    if (reward.awardedCount > 0) {
+      setCash(reward.cashCents / 100)
+      setMiniRewardNotice(`Mini-lesson rewards: +$${(reward.earnedCashCents / 100).toFixed(2)} and +${reward.earnedXp} XP.`)
+      try {
+        const fresh = await fetchPortfolio()
+        setPortfolioData(fresh)
+        setCash(fresh.cash)
+        setHoldings(fresh.holdings)
+      } catch {
+        setPortfolioData(null)
+        setPortfolioError('Portfolio quotes unavailable; mini-lesson reward was still saved.')
+      }
+    }
     awardTeacherRewards(id, 'mini', sectionIndex)
   }
 
@@ -343,6 +356,7 @@ export default function StudentApp({ user, token, onLogout }) {
         <div className="side-bottom">{navBtn(['account', 'Account'])}</div>
       </aside>
       <main className="main">
+        {miniRewardNotice && <p role="status" style={{ margin: '8px 18px', color: '#3C6E4D' }}>{miniRewardNotice}</p>}
         {page === 'home' && <Home user={user} total={total} cash={cash} xp={xp} lessons={lessons} setPage={setPage} onOpenLesson={openLesson} classes={classes} onJoin={() => setJoinOpen(true)} />}
         {page === 'lessons' && <Lessons lessons={lessons} miniProgress={miniProgress} onOpenLesson={openLesson} onOpenMini={openMini} onOpenQuiz={openQuiz} />}
         {page === 'quiz' && quizId && (

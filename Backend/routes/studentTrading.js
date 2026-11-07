@@ -2,6 +2,12 @@
 
 // Isolated, authenticated trading routes. No demo portfolio is accessed here.
 const express = require("express");
+const mongoose = require("mongoose");
+const MiniLessonCompletion = require("../models/MiniLessonCompletion");
+const ExpTransaction = require("../models/ExpTransaction");
+const StudentProgress = require("../models/StudentProgress");
+const MINI_REWARD_CENTS = 100; // $1.00 per mini-lesson
+const MINI_REWARD_XP = 10;
 const { authenticateToken, requireRole } = require("../middleware/auth");
 const TradingPortfolio = require("../models/TradingPortfolio");
 const LessonCompletion = require("../models/LessonCompletion");
@@ -95,6 +101,108 @@ router.post("/trades/sell", asyncRoute(async (req, res) => {
     (p) => sellStock(p, symbol, sharesToSell, priceCents));
   res.status(201).json({ transaction: result, cashCents: portfolio.cashCents,
     sharesUnits: portfolio.holdings[symbol] });
+}));
+
+// Reconcile already-completed mini-lessons and claim each mini reward only once.
+// Never accept reward amounts, student IDs, or XP values from the client.
+router.post("/rewards/minis/sync", asyncRoute(async (req, res) => {
+  const studentId = req.user.id;
+  const completions = await MiniLessonCompletion.find({ studentId })
+    .select("lessonId sectionIndex")
+    .lean();
+
+  const validCompletions = completions
+    .filter(item => Number.isInteger(Number(item.lessonId)) &&
+      Number(item.lessonId) >= 1 && Number(item.lessonId) <= 5 &&
+      Number.isSafeInteger(item.sectionIndex) &&
+      item.sectionIndex >= 0 && item.sectionIndex < 5)
+    .map(item => ({
+      id: `mini-${Number(item.lessonId)}-${item.sectionIndex}`,
+      lessonId: Number(item.lessonId),
+      sectionIndex: item.sectionIndex
+    }));
+
+  // Avoid creating the portfolio as a side-effect inside a multi-document txn.
+  await portfolioDocument(studentId);
+  const session = await mongoose.startSession();
+  let awardedCount = 0;
+
+  try {
+    awardedCount = await session.withTransaction(async () => {
+      const portfolio = await TradingPortfolio.findOne({ studentId }).session(session);
+      if (!portfolio) throw new Error("Student portfolio missing");
+      if (validCompletions.length === 0) return 0;
+
+      const existingXp = await ExpTransaction.find({
+        studentId,
+        sourceType: "lesson",
+        sourceId: { $in: validCompletions.map(item => item.id) }
+      }).select("sourceId").session(session).lean();
+      const xpIds = new Set(existingXp.map(row => row.sourceId));
+      const cashIds = new Set(portfolio.rewardHistory.map(row => row.id));
+
+      // Both rewards must be recorded in the same committed transaction.
+      // If there is old inconsistent data, stop instead of paying twice.
+      const mismatched = validCompletions.some(item =>
+        cashIds.has(item.id) !== xpIds.has(item.id));
+      if (mismatched) {
+        throw new Error("Mini-lesson reward records are inconsistent; administrator review required");
+      }
+
+      const pending = validCompletions.filter(item => !cashIds.has(item.id));
+      if (pending.length === 0) return 0;
+      const now = new Date();
+      const cashCents = pending.length * MINI_REWARD_CENTS;
+      const xp = pending.length * MINI_REWARD_XP;
+
+      await ExpTransaction.insertMany(pending.map(item => ({
+        studentId,
+        amount: MINI_REWARD_XP,
+        reason: `Completed mini-lesson ${item.lessonId}.${item.sectionIndex + 1}`,
+        sourceType: "lesson",
+        sourceId: item.id
+      })), { session });
+
+      await StudentProgress.findOneAndUpdate(
+        { studentId },
+        {
+          $inc: { totalExp: xp },
+          $set: { lastActivityAt: now },
+          $setOnInsert: { studentId }
+        },
+        { upsert: true, setDefaultsOnInsert: true, session }
+      );
+
+      const updated = await TradingPortfolio.findOneAndUpdate(
+        { studentId, "rewardHistory.id": { $nin: pending.map(item => item.id) } },
+        {
+          $inc: { cashCents, __v: 1 },
+          $push: { rewardHistory: { $each: pending.map(item => ({
+            id: item.id,
+            amountCents: MINI_REWARD_CENTS,
+            earnedAt: now.toISOString()
+          })) } }
+        },
+        { new: true, session }
+      );
+      if (!updated) throw new Error("Concurrent reward claim; retry the request");
+      return pending.length;
+    });
+  } finally {
+    await session.endSession();
+  }
+
+  const [portfolio, progress] = await Promise.all([
+    TradingPortfolio.findOne({ studentId }).lean(),
+    StudentProgress.findOne({ studentId }).lean()
+  ]);
+  res.json({
+    awardedCount,
+    earnedCashCents: awardedCount * MINI_REWARD_CENTS,
+    earnedXp: awardedCount * MINI_REWARD_XP,
+    cashCents: portfolio.cashCents,
+    totalExp: progress?.totalExp ?? 0
+  });
 }));
 
 // Module rewards are authorized by actual completed server-side lessons.

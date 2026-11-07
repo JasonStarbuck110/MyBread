@@ -53,58 +53,58 @@ router.get(
     })
 );
 
+// Mini-lesson knowledge checks are verified against the server answer key.
+// Client-side gating alone must never authorize a cash/XP reward.
+const MINI_CHECK_ANSWERS = Object.freeze({
+  1: [1, 2, 1, 0, 2],
+  2: [1, 1, 1, 1, 0],
+  3: [0, 1, 1, 1, 1],
+  4: [0, 1, 0, 1, 2],
+  5: [1, 1, 1, 1, 1]
+});
+
 router.post(
     "/lessons/:lessonId/mini-lessons/:sectionIndex/complete",
     authenticateToken,
     requireRole("student"),
     asyncRoute(async (req, res) => {
         const studentId = req.user.id;
-        const lessonId = String(Number(req.params.lessonId));
+        const numericId = Number(req.params.lessonId);
+        const lessonId = String(numericId);
         const sectionIndex = Number(req.params.sectionIndex);
+        const correctAnswers = MINI_CHECK_ANSWERS[numericId];
+        const answerIndex = req.body?.answerIndex;
 
-        if (!LESSON_CATALOG[Number(lessonId)]) {
-            return res.status(400).json({ error: "Invalid lesson" });
+        if (!Number.isSafeInteger(numericId) || !LESSON_CATALOG[numericId] ||
+            !correctAnswers || !Number.isSafeInteger(sectionIndex) ||
+            sectionIndex < 0 || sectionIndex >= correctAnswers.length) {
+            return res.status(400).json({ error: "Invalid mini-lesson" });
         }
-
-        if (
-            !Number.isSafeInteger(sectionIndex) ||
-            sectionIndex < 0 ||
-            sectionIndex > 20
-        ) {
-            return res.status(400).json({ error: "Invalid mini-lesson section" });
+        if (!Number.isSafeInteger(answerIndex) || answerIndex !== correctAnswers[sectionIndex]) {
+            return res.status(400).json({ error: "Answer the knowledge check correctly first" });
         }
-
-        if (sectionIndex > 0) {
-            const previousCompletion = await MiniLessonCompletion.findOne({
-                studentId,
-                lessonId,
-                sectionIndex: sectionIndex - 1
+        if (numericId > 1) {
+            const previousModulePassed = await LessonCompletion.exists({
+                studentId, lessonId: String(numericId - 1)
             });
-
+            if (!previousModulePassed) {
+                return res.status(403).json({ error: "Complete the previous module first" });
+            }
+        }
+        if (sectionIndex > 0) {
+            const previousCompletion = await MiniLessonCompletion.exists({
+                studentId, lessonId, sectionIndex: sectionIndex - 1
+            });
             if (!previousCompletion) {
-                return res.status(400).json({
-                    error: "Complete the previous mini-lesson first"
-                });
+                return res.status(400).json({ error: "Complete the previous mini-lesson first" });
             }
         }
 
         const completion = await MiniLessonCompletion.findOneAndUpdate(
             { studentId, lessonId, sectionIndex },
-            {
-                $setOnInsert: {
-                    studentId,
-                    lessonId,
-                    sectionIndex,
-                    completedAt: new Date()
-                }
-            },
-            {
-                upsert: true,
-                new: true,
-                setDefaultsOnInsert: true
-            }
+            { $setOnInsert: { studentId, lessonId, sectionIndex, completedAt: new Date() } },
+            { upsert: true, new: true, setDefaultsOnInsert: true }
         );
-
         return res.json({
             completed: true,
             lessonId,
