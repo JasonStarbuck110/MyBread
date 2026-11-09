@@ -5,6 +5,7 @@ export default function Dashboard({
   classesError,
   setPage
 }) {
+  
   return (
     <>
       <div className="t-page-header">
@@ -16,7 +17,6 @@ export default function Dashboard({
           Manage classes
         </button>
       </div>
-
       <div className="t-card">
         <div className="t-card-top">
           <h2>Your classes</h2>
@@ -24,15 +24,12 @@ export default function Dashboard({
             {classes.length} {classes.length === 1 ? 'class' : 'classes'}
           </span>
         </div>
-
         {classesLoading && (
           <p>Loading your classes...</p>
         )}
-
         {classesError && (
           <p role="alert">{classesError}</p>
         )}
-
         {!classesLoading && !classesError && classes.length === 0 && (
           <div className="t-nothing-here">
             You haven't created a class yet.
@@ -42,7 +39,6 @@ export default function Dashboard({
             </button>
           </div>
         )}
-
         {classes.map((classItem) => (
           <div className="t-row" key={classItem._id}>
             <div className="t-initials">

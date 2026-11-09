@@ -23,7 +23,6 @@ function levelFromXp(xp) {
 
 function groupByStudent(records) {
     const grouped = new Map()
-
     for (const record of records) {
         const id = String(record.studentId)
         if (!grouped.has(id)) {
@@ -82,7 +81,6 @@ router.get('/class/:classId', async (req, res, next) => {
         id: String(classroom._id),
         name: classroom.name
     }
-
     if (ids.length === 0) {
         return res.json({
         class: responseClass,
@@ -136,7 +134,6 @@ router.get('/class/:classId', async (req, res, next) => {
 
     var prices = {}
     var marketDataError = null
-
     try {
         prices = await getMarketPrices(symbols)
     } catch {
@@ -153,7 +150,6 @@ router.get('/class/:classId', async (req, res, next) => {
         sectionIndex: m.sectionIndex
     }))
     const bestScores = {}
-
     for (const attempt of attemptsById.get(id) || []) {
         const percentage = Math.round(
           attempt.score / attempt.maxScore * 100

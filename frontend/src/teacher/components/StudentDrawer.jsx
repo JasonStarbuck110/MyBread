@@ -29,13 +29,11 @@ export default function StudentDrawer({ student, onClose }) {
 				</div>
 				<button className="t-close-btn" onClick={onClose} aria-label="Close">&times;</button>
 			</div>
-
 			<div className="t-student-numbers">
 				<div><b>{student.xp}</b><span>XP</span></div>
 				<div><b>{student.quizAverage === null ? '—' : `${student.quizAverage}%`}</b><span>Quiz avg</span></div>
 				<div><b>{completedModules.size}/{LESSONS.length}</b><span>Modules</span></div>
 			</div>
-
 			<div className="t-card">
 				<h3>Lessons</h3>
 				{LESSONS.map(lesson => {
@@ -60,24 +58,20 @@ export default function StudentDrawer({ student, onClose }) {
 					)
 				})}
 			</div>
-
 			<div className="t-card">
 				<h3>
 					Portfolio: {typeof totalCents === 'number' ? formatCents(totalCents) : portfolio ? 'Market value unavailable' : 'Not started'}
 				</h3>
-
 				{typeof gainCents === 'number' && (
 					<p className={`t-small ${gainCents >= 0 ? 't-green' : 't-red'}`}>
 						{gainCents >= 0 ? '+' : '−'}{formatCents(Math.abs(gainCents))} realized and unrealized gain
 					</p>
 				)}
-
 				{portfolio && (
 					<p className="t-small t-gray" style={{ margin: '4px 0 10px' }}>
 						Cash: {formatCents(portfolio.cashCents)}
 					</p>
 				)}
-
 				{holdings.length === 0 ? (
 					<div className="t-nothing-here">No stocks held.</div>
 				) : (
@@ -97,7 +91,6 @@ export default function StudentDrawer({ student, onClose }) {
 					</table>
 				)}
 			</div>
-
 			<div className="t-card">
 				<h3>Recent trades</h3>
 				{transactions.length === 0 ? (
@@ -119,7 +112,6 @@ export default function StudentDrawer({ student, onClose }) {
 					</table>
 				)}
 			</div>
-
 			<button className="t-btn t-btn-outline" onClick={onClose}>Close</button>
 		</>
 	)

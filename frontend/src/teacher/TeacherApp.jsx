@@ -98,7 +98,6 @@ export default function TeacherApp({ user, token, onLogout }) {
           <button className="nav" onClick={onLogout}>Log out</button>
         </div>
       </aside>
-
       <main className="main">
         {page === 'dashboard' && (<Dashboard user={user} classes={classes} classesLoading={classesLoading} classesError={classesError} setPage={goTo} />)}
         {page === 'classes' && (<Classes token={token} classes={classes} setClasses={setClasses} classesLoading={classesLoading} classesError={classesError} />)}
@@ -133,7 +132,6 @@ export default function TeacherApp({ user, token, onLogout }) {
         )}
         {page === 'links' && <Links />}
       </main>
-
       <div className={'t-overlay' + (student ? ' t-open' : '')} onClick={closeStudent} />
       <div className={'t-drawer' + (student ? ' t-open' : '')} role="dialog" aria-label="Student details" aria-hidden={!student}>
         {student && <StudentDrawer student={student} onClose={closeStudent} />}

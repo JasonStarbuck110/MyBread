@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const miniLessonCompletionSchema = new mongoose.Schema({
     studentId: {
         type: mongoose.Schema.Types.ObjectId,

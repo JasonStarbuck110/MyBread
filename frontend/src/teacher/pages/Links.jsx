@@ -10,9 +10,9 @@ export default function Links() {
 
   const add = (e) => {
     e.preventDefault()
-    let url = form.url.trim()
+    var url = form.url.trim()
     if (!/^https?:\/\//i.test(url)) url = 'https://' + url
-    let host = ''
+    var host = ''
     try { host = new URL(url).hostname.replace(/^www\./, '') } catch { /* handled below */ }
     if (!host.includes('.')) return setErr('Enter a valid web address, like https://www.investor.gov')
     setLinks([...links, { id: Date.now(), title: form.title.trim() || host, url }])
@@ -28,7 +28,6 @@ export default function Links() {
           <p>Add trusted websites and videos. Students see these in their Links tab.</p>
         </div>
       </div>
-
       <div className="t-card">
         <h2>Links students can see</h2>
         {links.length === 0 && <div className="t-nothing-here">No links yet. Add one below.</div>}
@@ -42,7 +41,6 @@ export default function Links() {
           </div>
         ))}
       </div>
-
       <div className="t-card">
         <h2>Add a link</h2>
         <form onSubmit={add}>

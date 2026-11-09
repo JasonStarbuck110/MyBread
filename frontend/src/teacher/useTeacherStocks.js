@@ -29,7 +29,6 @@ export default function useTeacherStocks(token, classes = EMPTY_CLASSES, classes
 						}
 					)
 					const data = await response.json().catch(() => ({}))
-
 					if (!response.ok) throw new Error(data.error || `Unable to load ${classroom.name}`)
 					if (!Array.isArray(data.students)) throw new Error('Invalid student report')
 
@@ -40,14 +39,12 @@ export default function useTeacherStocks(token, classes = EMPTY_CLASSES, classes
 				}))
 
 				const roster = new Map()
-
 				for (const result of results) {
 					for (const student of result.students) {
 						const id = String(student.id)
 						if (!roster.has(id)) roster.set(id, { ...student, classes: [] })
 						const record = roster.get(id)
 						const classId = String(result.classroom._id || result.classroom.id)
-
 						if (!record.classes.some(item => item.id === classId)) {
 							record.classes.push({
 								id: classId,
@@ -96,7 +93,6 @@ export default function useTeacherStocks(token, classes = EMPTY_CLASSES, classes
 		new Date(trade.holding.timestamp).getTime() >= weekStart
 	).length
 	const ownership = new Map()
-
 	for (const student of students) {
 		for (const holding of student.portfolio?.holdings || []) {
 			if (holding.shares <= 0) continue

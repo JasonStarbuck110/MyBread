@@ -59,7 +59,6 @@ export default function Lessons({ notify, token, classes = [], classesLoading = 
   const selectedModule = curriculum.find(l => l.id === Number(moduleId))
   const selectedClassId = classId || String(classes[0]?._id || classes[0]?.id || '')
 
-
 useEffect(() => {
 	var cancelled = false
 
@@ -68,7 +67,6 @@ useEffect(() => {
 
 		try {
 			const data = await assignmentApi(token, '/api/assignments/mine')
-
 			if (!cancelled) {
 				setAssignments(data.assignments || [])
 			}
@@ -121,7 +119,6 @@ useEffect(() => {
     }
   }, [token, selectedClassId])
 
-
   async function submit(event) {
     event.preventDefault()
     setError('')
@@ -130,34 +127,27 @@ useEffect(() => {
     if (!selectedModule) return setError('Select a module.')
     if (!title.trim()) return setError('Enter an assignment title.')
     if (!instructions.trim()) return setError('Enter assignment instructions.')
-
     if (!/^\d{4}-\d{2}-\d{2}$/.test(due) || Number.isNaN(Date.parse(`${due}T12:00:00Z`))) {
       return setError('Choose a valid due date.')
     }
-
     if (recipientType === 'student' && !students.some(student => String(student.id) === studentId)) {
       return setError('Select an enrolled student.')
     }
-
     if (kind === 'mini' && !selectedModule.screens?.[Number(sectionIndex)]) {
       return setError('Select a mini-lesson.')
     }
 
     const xp = Number(rewardXp)
     const cash = Number(rewardCash)
-
     if (!/^\d+$/.test(rewardXp) || !Number.isSafeInteger(xp) || xp > 100000) {
       return setError('XP must be a whole number from 0 to 100,000.')
     }
-
     if (!/^\d+(?:\.\d{1,2})?$/.test(rewardCash) || !Number.isFinite(cash) || cash > 100000) {
       return setError('Simulated cash must be between $0 and $100,000.')
     }
-
     if (xp === 0 && cash === 0) {
       return setError('Choose at least one nonzero reward.')
     }
-
     const assignment = {
       title: title.trim(),
       instructions: instructions.trim(),
@@ -376,13 +366,9 @@ useEffect(() => {
               />
             </label>
             <p className="assignment-note">
-              Teacher-configured rewards are additional to built-in lesson rewards.
-              Students earn them after verified completion, not when an assignment is created.
             </p>
             {kind === 'quiz' && (
               <p className="assignment-note">
-                The module quiz still requires completion of all five mini-lessons. Assigning
-                it does not override prerequisites.
               </p>
             )}
             {error && (
@@ -443,8 +429,6 @@ useEffect(() => {
       <div className="t-card">
         <h2>Assignment tracking</h2>
         <p>
-          The existing teacher progress reports use sample data. Live per-student assignment
-          completion and grading will require your team's database integration.
         </p>
       </div>
     </>

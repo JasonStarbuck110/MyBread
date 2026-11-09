@@ -4,7 +4,6 @@ const User = require("../models/User");
 async function authenticateToken(req, res, next) {
     try {
         const authHeader = req.headers.authorization;
-
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res.status(401).json({
                 error: "Authentication Required"
@@ -12,7 +11,6 @@ async function authenticateToken(req, res, next) {
         }
 
         const token = authHeader.split(" ")[1];
-
         if (!token) {
             return res.status(401).json({
                 error: "Authentication Required"
@@ -20,13 +18,11 @@ async function authenticateToken(req, res, next) {
         }
 
         const secret = process.env.JWT_SECRET;
-
         if (!secret) {
             throw new Error("JWT_SECRET is not configured");
         }
 
         const decoded = jwt.verify(token, secret);
-
         const user = await User.findById(decoded.userId).select(
             "_id name email role isActive"
         );

@@ -41,7 +41,6 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
     return () => { clearTimeout(timeout); controller.abort() }
   }, [query])
   const featured = Object.keys(STOCKS).slice(0, 8)
-  // This is a curated market snapshot, not a ranked real-time movers feed.
   const loadMarketSnapshot = async () => {
     if (marketBusy) return
     setMarketBusy(true)
@@ -55,16 +54,13 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
       setMarketQuotes(updated)
     } finally { setMarketBusy(false) }
   }
-
-  // Avoid fetching the entire discovery catalog on page load. Only request
-  // a quote when the student opens a stock; owned shares use portfolio prices.
-  const stockInfo = (symbol) => quotes[symbol] || { name: STOCKS[symbol]?.name || symbol, price: backendPrices?.[symbol] || 0 }
+const stockInfo = (symbol) => quotes[symbol] || { name: STOCKS[symbol]?.name || symbol, price: backendPrices?.[symbol] || 0 }
   useEffect(() => {
     if (!detailSymbol || quotes[detailSymbol]) return
-    let active = true
+    var active = true
     fetchQuote(detailSymbol)
       .then(q => { if (active) setQuotes(old => ({ ...old, [detailSymbol]: q })) })
-      .catch(() => { /* A stock can still display its historical chart if quotes are unavailable. */ })
+      .catch(() => {  })
     return () => { active = false }
   }, [detailSymbol, quotes])
 
@@ -110,7 +106,6 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
         <h1>Stocks</h1>
         <p>Practice investing with simulated cash. Nothing here is real money.</p>
       </header>
-
       {portfolioError && <p className="loss" role="alert">Trading backend unavailable: {portfolioError}. Start the backend to load your portfolio.</p>}
       <section className="stats">
         <div className="panel">
@@ -127,12 +122,10 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
           <p className="muted">Complete lessons to earn more simulated cash.</p>
         </div>
       </section>
-
       <section className="panel">
         <h3>Portfolio performance</h3>
         <PortfolioChart total={total} />
       </section>
-
       <section className="panel">
         <h3>My holdings</h3>
         {held.length === 0 ? (
@@ -159,7 +152,6 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
           </div>
         )}
       </section>
-
       {detailSymbol && <section className="panel stock-detail" aria-label={`${detailSymbol} stock details`}>
         <div className="stock-detail-head">
           <div><h3>{stockInfo(detailSymbol).name} ({detailSymbol})</h3>
@@ -174,7 +166,6 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
           <button className="btn" onClick={() => { setTicker(detailSymbol); setMode('buy'); setMsg(null) }}>Trade {detailSymbol}</button>
         </div>
       </section>}
-
       <div className="grid investing-extras">
         <section className="panel">
           <h3>My watchlist</h3>
@@ -197,7 +188,6 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
           </li>)}</ul>
         </section>
       </div>
-
       <div className="grid">
         <section className="panel">
           <h3>Discover stocks</h3>
@@ -225,7 +215,6 @@ export default function Stocks({ cash, holdings, total, stockValue, gain, backen
           {searchError && <p className="loss" role="status">{searchError}</p>}
           <p className="note">Search uses Twelve Data. Prices load on selection to save API credits. Educational use only.</p>
         </section>
-
         <section className="panel">
           <h3>Simulated trade</h3>
           {!ticker ? (

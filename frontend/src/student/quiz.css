@@ -1,4 +1,3 @@
-/* Quiz page styles (ported from Brendan's App.css). Classes start with q- and are scoped to .q-root. */
 .q-root {
   --forest: var(--green);
   --forest-deep: #315b40;

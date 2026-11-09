@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const quizAttemptSchema = new mongoose.Schema(
     {
         studentId: {

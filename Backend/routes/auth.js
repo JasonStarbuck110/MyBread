@@ -14,7 +14,6 @@ const authLimiter = rateLimit({
 
     keyGenerator: (req) => {
         const ip = req.get("cf-connecting-ip") || req.ip;
-
         if (!ip) {
             const error = new Error("Client IP unavailable");
             error.status = 503;
@@ -33,7 +32,6 @@ const asyncRoute = fn => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
-// Register a student or teacher.
 router.post("/register", authLimiter, asyncRoute(async (req, res) => {
     const { name, email, password, role } = req.body ?? {};
 
@@ -50,7 +48,6 @@ router.post("/register", authLimiter, asyncRoute(async (req, res) => {
 
     const cleanName = name.trim();
     const cleanEmail = email.trim().toLowerCase();
-
     if (
         cleanName.length < 2 ||
         cleanName.length > 100 ||
@@ -65,7 +62,6 @@ router.post("/register", authLimiter, asyncRoute(async (req, res) => {
     }
 
     const existingUser = await User.findOne({ email: cleanEmail });
-
     if (existingUser) {
         return res.status(409).json({
             error: "An account with this email already exists"
@@ -73,7 +69,6 @@ router.post("/register", authLimiter, asyncRoute(async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-
     const user = await User.create({
         name: cleanName,
         email: cleanEmail,
@@ -104,7 +99,6 @@ router.post("/register", authLimiter, asyncRoute(async (req, res) => {
     });
 }));
 
-// Log in an existing student or teacher.
 router.post("/login", authLimiter, asyncRoute(async (req, res) => {
     const { email, password } = req.body ?? {};
 
@@ -118,7 +112,6 @@ router.post("/login", authLimiter, asyncRoute(async (req, res) => {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-
     const user = await User.findOne({
         email: cleanEmail
     }).select("+passwordHash");
@@ -141,7 +134,6 @@ router.post("/login", authLimiter, asyncRoute(async (req, res) => {
     }
 
     const secret = process.env.JWT_SECRET;
-
     if (!secret) {
         throw new Error("JWT_SECRET is not configured");
     }
@@ -164,7 +156,6 @@ router.post("/login", authLimiter, asyncRoute(async (req, res) => {
     });
 }));
 
-// Verifies user token and returns account details.
 router.get("/me", authenticateToken, asyncRoute(async (req, res) => {
     let progress = null;
 

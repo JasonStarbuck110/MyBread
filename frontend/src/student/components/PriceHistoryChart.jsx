@@ -18,7 +18,7 @@ export default function PriceHistoryChart({ symbol, total, refreshKey }) {
   const error = loading ? '' : history.error
   const gradientId = useId().replaceAll(':', '')
   useEffect(() => {
-    let active = true
+    var active = true
     fetchHistory(range, symbol).then(data => {
       if (!active) return
       const parsed = (data.points || []).map(p => ({

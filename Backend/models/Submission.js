@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const submissionSchema = new mongoose.Schema(
     {
         assignmentId: {
@@ -61,7 +60,6 @@ const submissionSchema = new mongoose.Schema(
     }
 );
 
-// One current submission record per student per assignment.
 submissionSchema.index(
     { assignmentId: 1, studentId: 1 },
     { unique: true }

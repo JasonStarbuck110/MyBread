@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const expTransactionSchema = new mongoose.Schema(
     {
         studentId: {
@@ -41,7 +40,6 @@ const expTransactionSchema = new mongoose.Schema(
     }
 );
 
-// Prevents awarding EXP twice for the same activity.
 expTransactionSchema.index(
     { studentId: 1, sourceType: 1, sourceId: 1 },
     { unique: true }

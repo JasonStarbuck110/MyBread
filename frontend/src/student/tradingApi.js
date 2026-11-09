@@ -1,7 +1,5 @@
 const SHARE_SCALE = 1_000_000
 
-// Every portfolio, trade, reward and market-data call uses the signed-in user's
-// token. The server determines studentId from the verified token.
 async function request(path, options = {}) {
   const token = sessionStorage.getItem('mybread_token')
   if (!token) throw new Error('Please sign in to use the portfolio.')
@@ -64,7 +62,6 @@ export function creditModuleReward(moduleId) {
   })
 }
 
-// Claim all completed mini-lesson rewards once, including earlier progress.
 export function syncMiniRewards() {
   return request('/rewards/minis/sync', { method: 'POST' })
 }

@@ -9,7 +9,6 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
   const [selectedClass, setSelectedClass] = useState(null)
   const [students, setStudents] = useState([])
   const [studentsLoading, setStudentsLoading] = useState(false)
-
   const handleCreate = async (e) => {
     e.preventDefault()
     setError('')
@@ -52,7 +51,6 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
           <p>Create classes and manage student enrollment.</p>
         </div>
       </div>
-
       <div className="t-card">
         <h2>Create a class</h2>
         <form onSubmit={handleCreate}>
@@ -66,7 +64,6 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
             maxLength={100}
             required
           />
-
           <label className="t-label" htmlFor="class-description">Description (optional)</label>
           <textarea
             id="class-description"
@@ -77,25 +74,19 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
             maxLength={1000}
             rows={3}
           />
-
           {error && <p role="alert">{error}</p>}
-
           <button className="t-btn t-btn-tan" type="submit" disabled={saving}>
             {saving ? 'Creating...' : 'Create class'}
           </button>
         </form>
       </div>
-
       <div className="t-card">
         <h2>Your classes</h2>
-
         {classesLoading && <p>Loading classes...</p>}
         {classesError && <p role="alert">{classesError}</p>}
-
         {!classesLoading && classes.length === 0 && (
           <div className="t-nothing-here">You haven't created any classes yet.</div>
         )}
-
         {classes.map(classItem => (
           <div className="t-row" key={classItem._id}>
             <div className="t-initials">
@@ -117,7 +108,6 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
           </div>
         ))}
       </div>
-
       {selectedClass && (
         <div className="t-card">
           <div className="t-card-top">
@@ -126,13 +116,10 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
               Close
             </button>
           </div>
-
           {studentsLoading && <p>Loading students...</p>}
-
           {!studentsLoading && students.length === 0 && (
             <p>No students have joined this class yet.</p>
           )}
-
           {students.map(student => (
             <div className="t-row" key={student._id}>
               <div className="t-initials">

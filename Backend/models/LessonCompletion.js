@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const lessonCompletionSchema = new mongoose.Schema(
     {
         studentId: {
@@ -32,7 +31,6 @@ const lessonCompletionSchema = new mongoose.Schema(
     }
 );
 
-// A student can complete a lesson for EXP only once.
 lessonCompletionSchema.index(
     { studentId: 1, lessonId: 1 },
     { unique: true }

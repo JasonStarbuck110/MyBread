@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const studentAchievementSchema = new mongoose.Schema(
     {
         studentId: {
@@ -32,7 +31,6 @@ const studentAchievementSchema = new mongoose.Schema(
     }
 );
 
-// Each achievement can only be earned once by each student.
 studentAchievementSchema.index(
     { studentId: 1, achievementId: 1 },
     { unique: true }

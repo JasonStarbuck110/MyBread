@@ -69,8 +69,6 @@ export default function StudentApp({ user, token, onLogout }) {
       setProgressError('')
 
       try {
-        // Backfill earlier mini-lesson completions before reading EXP.
-        // The backend validates DB records and credits each only once.
         var rewards = null
         try {
           rewards = await syncMiniRewards()
@@ -98,12 +96,11 @@ export default function StudentApp({ user, token, onLogout }) {
             setMiniRewardNotice(`Mini-lesson rewards: +$${(rewards.earnedCashCents / 100).toFixed(2)} and +${rewards.earnedXp} XP.`)
           }
           setCash((assignmentReward?.cashCents ?? rewards.cashCents) / 100)
-          // Refresh the market valuation after server-side backfill.
           try {
             const fresh = await fetchPortfolio()
             if (!cancelled) { setPortfolioData(fresh); setCash(fresh.cash); setHoldings(fresh.holdings) }
           } catch {
-            // The saved cash and EXP remain authoritative even if quotes fail.
+            // 
           }
         }
 
@@ -149,8 +146,6 @@ export default function StudentApp({ user, token, onLogout }) {
       cancelled = true
     }
   }, [token])
-
-
 
   const refreshPortfolio = async () => {
     try {
@@ -224,7 +219,6 @@ export default function StudentApp({ user, token, onLogout }) {
         if (!cancelled) setClassesLoading(false)
       }
     }
-
 
 	loadClasses()
 
@@ -320,7 +314,6 @@ export default function StudentApp({ user, token, onLogout }) {
 
   const completeMini = async (id, sectionIndex, answerIndex) => {
     await completeMiniLesson(token, id, sectionIndex, answerIndex)
-
     setMiniProgress(previous => ({
       ...previous,
       [id]: {
@@ -329,8 +322,6 @@ export default function StudentApp({ user, token, onLogout }) {
       }
     }))
 
-    // A completed mini is saved independently: if payout fails, retrying
-    // will reconcile without granting duplicate rewards.
     const reward = await syncMiniRewards()
     setXp(reward.totalExp)
     if (reward.awardedCount > 0) {
@@ -349,8 +340,6 @@ export default function StudentApp({ user, token, onLogout }) {
     await reconcileAssignmentRewards()
   }
 
-  // The server decides whether a quiz reward is payable. Never use client XP
-  // or a browser-stored teacher reward as authority for wallet deposits.
   const claimModuleWalletReward = async (id, selectedAnswers) => {
     setWalletRewardStatus(previous => ({
       ...previous,
@@ -364,8 +353,6 @@ export default function StudentApp({ user, token, onLogout }) {
         throw new Error('The wallet server returned an invalid balance')
       }
 
-      // Update cash immediately from the authoritative reward response, even
-      // if the subsequent portfolio quote/valuation refresh is rate-limited.
       setCash(walletCash)
       setPortfolioData(previous => previous ? { ...previous, cash: walletCash } : previous)
       setPortfolioError('')
@@ -397,14 +384,9 @@ export default function StudentApp({ user, token, onLogout }) {
   }
 
   const completeLesson = async (id, selectedAnswers) => {
-    // Submit answers to the backend. The server grades the quiz
-    // and decides whether EXP can be awarded.
     const result = await submitLessonAttempt(token, id, selectedAnswers)
-
-    // Always use the EXP total returned by MongoDB.
     setXp(result.progress?.totalExp ?? 0)
 
-    // Keep the existing browser progress cache in sync for now.
     setLessonProgress(previous => {
       const next = {
         ...previous,
@@ -419,7 +401,6 @@ export default function StudentApp({ user, token, onLogout }) {
     })
 
     if (result.passed) {
-      // Keep the existing cash wallet reward separate from EXP.
       await claimModuleWalletReward(id, selectedAnswers)
       await reconcileAssignmentRewards()
     }

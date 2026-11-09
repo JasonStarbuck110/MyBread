@@ -28,7 +28,6 @@ const LESSON_CATALOG = {
 
 function gradeLesson(lessonId, submittedAnswers) {
     const lesson = LESSON_CATALOG[Number(lessonId)];
-
     if (!lesson) {
         throw new Error("Invalid lesson");
     }

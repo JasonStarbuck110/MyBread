@@ -1,6 +1,5 @@
 "use strict";
 
-// Isolated, authenticated trading routes. No demo portfolio is accessed here.
 const express = require("express");
 const mongoose = require("mongoose");
 const MiniLessonCompletion = require("../models/MiniLessonCompletion");
@@ -18,7 +17,6 @@ const { getPortfolioSummary } = require("../trading/analytics");
 const { getPortfolioHistory, getStockHistory } = require("../trading/portfolioHistory");
 const { configurationFor } = require("../trading/marketHistory");
 const { searchSymbols } = require("../trading/symbolSearch");
-
 const router = express.Router();
 const asyncRoute = (handler) => (req, res, next) => {
   Promise.resolve().then(() => handler(req, res)).catch(next);
@@ -29,7 +27,6 @@ const REWARDS = Object.freeze({ 1: 500, 2: 500, 3: 500, 4: 500, 5: 500 });
 router.use(authenticateToken, requireRole("student"));
 
 async function portfolioDocument(studentId) {
-  // The identity comes exclusively from the verified JWT, never a client parameter.
   return TradingPortfolio.findOneAndUpdate(
     { studentId },
     { $setOnInsert: { studentId, ...createPortfolio() } },
@@ -55,8 +52,6 @@ async function changePortfolio(studentId, action) {
   document.holdings = new Map(Object.entries(portfolio.holdings));
   document.transactions = portfolio.transactions;
   document.rewardHistory = portfolio.rewardHistory;
-  // TradingPortfolio already has optimisticConcurrency; simultaneous trades
-  // cannot silently overwrite one another. On conflict, return 409 and retry.
   await document.save();
   return { result, portfolio };
 }
@@ -103,8 +98,6 @@ router.post("/trades/sell", asyncRoute(async (req, res) => {
     sharesUnits: portfolio.holdings[symbol] });
 }));
 
-// Reconcile already-completed mini-lessons and claim each mini reward only once.
-// Never accept reward amounts, student IDs, or XP values from the client.
 router.post("/rewards/minis/sync", asyncRoute(async (req, res) => {
   const studentId = req.user.id;
   const completions = await MiniLessonCompletion.find({ studentId })
@@ -122,10 +115,9 @@ router.post("/rewards/minis/sync", asyncRoute(async (req, res) => {
       sectionIndex: item.sectionIndex
     }));
 
-  // Avoid creating the portfolio as a side-effect inside a multi-document txn.
   await portfolioDocument(studentId);
   const session = await mongoose.startSession();
-  let awardedCount = 0;
+  var awardedCount = 0;
 
   try {
     awardedCount = await session.withTransaction(async () => {
@@ -140,9 +132,6 @@ router.post("/rewards/minis/sync", asyncRoute(async (req, res) => {
       }).select("sourceId").session(session).lean();
       const xpIds = new Set(existingXp.map(row => row.sourceId));
       const cashIds = new Set(portfolio.rewardHistory.map(row => row.id));
-
-      // Both rewards must be recorded in the same committed transaction.
-      // If there is old inconsistent data, stop instead of paying twice.
       const mismatched = validCompletions.some(item =>
         cashIds.has(item.id) !== xpIds.has(item.id));
       if (mismatched) {
@@ -205,8 +194,6 @@ router.post("/rewards/minis/sync", asyncRoute(async (req, res) => {
   });
 }));
 
-// Module rewards are authorized by actual completed server-side lessons.
-// Atomic $inc/$push ensures repeated submissions cannot credit the same reward.
 router.post("/rewards/module", asyncRoute(async (req, res) => {
   const moduleId = Number(req.body?.moduleId);
   const rewardCents = REWARDS[moduleId];
@@ -237,7 +224,6 @@ router.post("/rewards/module", asyncRoute(async (req, res) => {
     rewardCents: updated ? rewardCents : 0 });
 }));
 
-// Market-data endpoints still use the existing Twelve Data backend utilities.
 router.get("/stocks/:symbol/quote", asyncRoute(async (req, res) => {
   res.json(await getStockQuote(req.params.symbol));
 }));

@@ -35,7 +35,6 @@ export function isPastDue(lesson) {
   return new Date(lesson.due + "T23:59") < today;
 }
 
-// Returns "done", "in progress", "not started", or "late"
 export function getStatus(student, lessonIndex) {
   const value = student.progress[lessonIndex];
   if (typeof value === "number") {
@@ -48,8 +47,8 @@ export function getStatus(student, lessonIndex) {
 }
 
 export function countLessonsDone(student) {
-  let count = 0;
-  for (let i = 0; i < lessons.length; i++) {
+  var count = 0;
+  for (var i = 0; i < lessons.length; i++) {
     if (getStatus(student, i) === "done") {
       count++;
     }
@@ -58,8 +57,8 @@ export function countLessonsDone(student) {
 }
 
 export function countLateLessons(student) {
-  let count = 0;
-  for (let i = 0; i < lessons.length; i++) {
+  var count = 0;
+  for (var i = 0; i < lessons.length; i++) {
     if (getStatus(student, i) === "late") {
       count++;
     }
@@ -68,8 +67,8 @@ export function countLateLessons(student) {
 }
 
 export function getQuizAverage(student) {
-  let total = 0;
-  let count = 0;
+  var total = 0;
+  var count = 0;
   for (const value of student.progress) {
     if (typeof value === "number") {
       total += value;
@@ -89,7 +88,7 @@ export function getHoldingValue(holding) {
 }
 
 export function getPortfolioValue(student) {
-  let total = student.cash;
+  var total = student.cash;
   for (const holding of student.holdings) {
     total += getHoldingValue(holding);
   }
@@ -116,10 +115,10 @@ export function getWarnings(student) {
 
 // How the whole class is doing on one lesson
 export function getLessonSummary(lessonIndex) {
-  let done = 0;
-  let inProgress = 0;
-  let late = 0;
-  let scoreTotal = 0;
+  var done = 0;
+  var inProgress = 0;
+  var late = 0;
+  var scoreTotal = 0;
 
   for (const student of students) {
     const status = getStatus(student, lessonIndex);
@@ -133,7 +132,7 @@ export function getLessonSummary(lessonIndex) {
     }
   }
 
-  let average = null;
+  var average = null;
   if (done > 0) {
     average = Math.round(scoreTotal / done);
   }
@@ -143,7 +142,7 @@ export function getLessonSummary(lessonIndex) {
 
 // The first lesson that isn't past due yet
 export function getCurrentLesson() {
-  for (let i = 0; i < lessons.length; i++) {
+  for (var i = 0; i < lessons.length; i++) {
     if (!isPastDue(lessons[i])) {
       return i;
     }

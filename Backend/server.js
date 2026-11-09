@@ -203,7 +203,6 @@ app.use((error, req, res, next) => {
     }
 
     const message = error.message || "";
-
     const clientError =
         message.startsWith("Invalid") ||
         message.startsWith("Insufficient") ||
@@ -215,7 +214,6 @@ app.use((error, req, res, next) => {
             : "An unexpected server error occurred"
     });
 });
-
 
 async function startServer() {
     try {

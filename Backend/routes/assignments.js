@@ -59,7 +59,6 @@ router.get(
 				}
 			]
 		}).sort({ dueDate: 1, createdAt: -1 }).lean();
-
         const [claims, miniCompletions, lessonCompletions] = await Promise.all([
             AssignmentRewardClaim.find({
                 studentId: req.user.id,
@@ -84,12 +83,10 @@ router.get(
         const results = assignments.map(assignment => {
             const lessonId = String(assignment.moduleId);
             var completedAt = null;
-
             if (assignment.kind === "mini") {
                 completedAt = miniDates.get(`${lessonId}:${assignment.sectionIndex}`) ?? null;
             } else if (assignment.kind === "module" || assignment.kind === "quiz") {
                 const quizDate = quizDates.get(lessonId);
-
                 if (quizDate && [0, 1, 2, 3, 4].every(index => {
                     const miniDate = miniDates.get(`${lessonId}:${index}`);
                     return miniDate && new Date(miniDate) <= new Date(quizDate);

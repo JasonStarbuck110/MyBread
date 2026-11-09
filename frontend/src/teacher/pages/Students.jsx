@@ -23,7 +23,7 @@ export default function Students({ token, classes = EMPTY_CLASSES, classesLoadin
 
 	useEffect(() => {
 		if (classesLoading || classesError) return
-		let cancelled = false
+		var cancelled = false
 		const loadStudents = async () => {
 			setLoading(true)
 			setError('')
@@ -65,7 +65,6 @@ export default function Students({ token, classes = EMPTY_CLASSES, classesLoadin
 		loadStudents()
 		return () => { cancelled = true }
 	}, [token, classes, classesLoading, classesError, refresh])
-
 	const query = search.trim().toLowerCase()
 	const list = students.filter(student => {
 		const matchesName = student.name?.toLowerCase().includes(query) || student.email?.toLowerCase().includes(query)
@@ -84,7 +83,6 @@ export default function Students({ token, classes = EMPTY_CLASSES, classesLoadin
 					<p>Click a student to see their lessons and portfolio.</p>
 				</div>
 			</div>
-
 			<div className="t-card">
 				<div className="t-filters">
 					<input
@@ -108,20 +106,16 @@ export default function Students({ token, classes = EMPTY_CLASSES, classesLoadin
 						Refresh
 					</button>
 				</div>
-
 				{busy && <p role="status">Loading student reports...</p>}
 				{currentError && <p role="alert">{currentError}</p>}
-
 				{!busy && !currentError && classes.length === 0 && (
 					<div className="t-nothing-here">Create a class to start enrolling students.</div>
 				)}
-
 				{!busy && !currentError && classes.length > 0 && list.length === 0 && (
 					<div className="t-nothing-here">
 						{search || filter !== 'all' || classFilter !== 'all' ? 'No students match these filters.' : 'No students have joined your classes yet.'}
 					</div>
 				)}
-
 				{!busy && !currentError && list.length > 0 && (
 					<table>
 						<thead>

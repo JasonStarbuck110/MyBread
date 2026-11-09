@@ -1,6 +1,4 @@
-
 const mongoose = require("mongoose");
-
 var connectionPromise = null;
 
 async function connectDatabase() {

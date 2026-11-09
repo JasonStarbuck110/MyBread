@@ -40,9 +40,6 @@ function chartPoints(raw) {
 export default function PortfolioChart({ total }) {
   const [range, setRange] = useState('1D')
   const [view, setView] = useState('value')
-  // Associate each asynchronous response with its requested range and value.
-  // A new request displays loading immediately without synchronously setting
-  // component state inside the effect.
   const requestKey = JSON.stringify([range, total])
   const [history, setHistory] = useState({ key: null, points: [], error: '' })
   const [hoverIndex, setHoverIndex] = useState(null)
@@ -51,8 +48,7 @@ export default function PortfolioChart({ total }) {
   const error = loading ? '' : history.error
 
   useEffect(() => {
-    let mounted = true
-
+    var mounted = true
     fetchHistory(range)
       .then((response) => {
         if (mounted) setHistory({ key: requestKey, points: chartPoints(response.points), error: '' })

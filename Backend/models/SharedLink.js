@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const sharedLinkSchema = new mongoose.Schema(
     {
         title: {

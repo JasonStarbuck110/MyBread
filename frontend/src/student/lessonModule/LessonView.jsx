@@ -9,14 +9,12 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, wa
   const [error, setError] = useState('')
   const [submittedAnswers, setSubmittedAnswers] = useState(null)
   const [submitting, setSubmitting] = useState(false)
-
   const screen = lesson.screens?.[sectionIndex]
   const check = screen?.checkQuestion
   const correct = check && choice === check.correct
   const questions = lesson.questions || []
   const pass = lesson.passingCorrect || Math.ceil(questions.length * 0.8)
   const goTop = () => window.scrollTo(0, 0)
-
   const finish = async () => {
     const selected = questions.map((_, i) => answers[i])
 

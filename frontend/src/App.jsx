@@ -13,7 +13,6 @@ export default function App() {
 
   useEffect(() => {
     const savedToken = sessionStorage.getItem('mybread_token')
-
     if (!savedToken) {
       return
     }
@@ -51,11 +50,9 @@ export default function App() {
     })
 
     const data = await response.json()
-
     if (!response.ok) {
       throw new Error(data.error || 'Login failed. Please try again.')
     }
-
     if (!data.token || !data.user) {
       throw new Error('The server returned an invalid login response.')
     }
@@ -71,7 +68,6 @@ export default function App() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, email, password, role: 'student' })
     })
-
     const data = await response.json()
     if (!response.ok) {
       throw new Error(data.error || 'Registration failed. Please try again.')
@@ -89,11 +85,9 @@ export default function App() {
   if (checkingAuth) {
     return <p>Checking your session...</p>
   }
-
   if (!user) {
     return <Login onLogin={handleLogin} onSignup={handleSignup} />
   }
-
   if (user.role === 'teacher') {
     return <TeacherApp user={user} token={token} onLogout={logout} />
   }

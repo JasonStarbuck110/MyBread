@@ -1,15 +1,12 @@
 const express = require("express");
 const mongoose = require("mongoose");
-
 const { authenticateToken, requireRole } = require("../middleware/auth");
 const { LESSON_CATALOG, gradeLesson } = require("../learning/lessonCatalog");
-
 const QuizAttempt = require("../models/QuizAttempt");
 const LessonCompletion = require("../models/LessonCompletion");
 const ExpTransaction = require("../models/ExpTransaction");
 const StudentProgress = require("../models/StudentProgress");
 const MiniLessonCompletion = require("../models/MiniLessonCompletion");
-
 const router = express.Router();
 const asyncRoute = fn => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -53,14 +50,12 @@ router.get(
     })
 );
 
-// Mini-lesson knowledge checks are verified against the server answer key.
-// Client-side gating alone must never authorize a cash/XP reward.
 const MINI_CHECK_ANSWERS = Object.freeze({
-  1: [1, 2, 1, 0, 2],
-  2: [1, 1, 1, 1, 0],
-  3: [0, 1, 1, 1, 1],
-  4: [0, 1, 0, 1, 2],
-  5: [1, 1, 1, 1, 1]
+    1: [1, 2, 1, 0, 2],
+    2: [1, 1, 1, 1, 0],
+    3: [0, 1, 1, 1, 1],
+    4: [0, 1, 0, 1, 2],
+    5: [1, 1, 1, 1, 1]
 });
 
 router.post(
@@ -74,7 +69,6 @@ router.post(
         const sectionIndex = Number(req.params.sectionIndex);
         const correctAnswers = MINI_CHECK_ANSWERS[numericId];
         const answerIndex = req.body?.answerIndex;
-
         if (!Number.isSafeInteger(numericId) || !LESSON_CATALOG[numericId] ||
             !correctAnswers || !Number.isSafeInteger(sectionIndex) ||
             sectionIndex < 0 || sectionIndex >= correctAnswers.length) {
@@ -99,7 +93,6 @@ router.post(
                 return res.status(400).json({ error: "Complete the previous mini-lesson first" });
             }
         }
-
         const completion = await MiniLessonCompletion.findOneAndUpdate(
             { studentId, lessonId, sectionIndex },
             { $setOnInsert: { studentId, lessonId, sectionIndex, completedAt: new Date() } },
@@ -121,35 +114,26 @@ router.post(
     asyncRoute(async (req, res) => {
         const { lessonId } = req.params;
         const { answers } = req.body ?? {};
-
-        // Grade answers using the trusted server-side answer key.
         const result = gradeLesson(lessonId, answers);
         const studentId = req.user.id;
         const cleanLessonId = String(Number(lessonId));
-
         const session = await mongoose.startSession();
-
-        let responseData;
-
+        var responseData;
         try {
             await session.withTransaction(async () => {
                 const existingCompletion = await LessonCompletion.findOne({
                     studentId,
                     lessonId: cleanLessonId
                 }).session(session);
-
                 const firstCompletion = !existingCompletion;
                 const awardedExp =
                     firstCompletion && result.passed ? result.xp : 0;
-
                 const previousAttempts = await QuizAttempt.countDocuments({
                     studentId,
                     quizId: cleanLessonId
                 }).session(session);
-
                 const now = new Date();
 
-                // Record every attempt, including failed attempts and retakes.
                 await QuizAttempt.create(
                     [{
                         studentId,

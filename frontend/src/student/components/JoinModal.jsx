@@ -41,7 +41,6 @@ export default function JoinModal({ onJoin, onClose }) {
         onSubmit={join}
       >
         <h3>Join a class</h3>
-
         <label className="field">
           <span>Class code from your teacher</span>
           <input
@@ -52,13 +51,11 @@ export default function JoinModal({ onJoin, onClose }) {
             required
           />
         </label>
-
         {msg && (
           <p className={msg.ok ? 'gain' : 'loss'} role="status">
             {msg.text}
           </p>
         )}
-
         <div className="modal-actions">
           <button className="btn" type="submit" disabled={loading}>
             {loading ? 'Joining...' : 'Join class'}

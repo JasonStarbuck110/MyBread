@@ -66,15 +66,15 @@ export default function Home({
 						<li key={assignment._id}>
 							<div>
 								<strong>{assignment.title}</strong>
-                <div className="muted">
-                  {assignment.completionStatus === 'rewarded'
-                    ? 'Completed — reward claimed'
-                    : assignment.completionStatus === 'completed'
-                      ? 'Completed — reward pending'
-                      : assignment.completionStatus === 'previously_completed'
-                        ? 'Completed before assignment — reward not eligible'
-                        : 'Assigned'}
-                </div>
+								<div className="muted">
+									{assignment.completionStatus === 'rewarded'
+									? 'Completed — reward claimed'
+									: assignment.completionStatus === 'completed'
+										? 'Completed — reward pending'
+										: assignment.completionStatus === 'previously_completed'
+										? 'Completed before assignment — reward not eligible'
+										: 'Assigned'}
+								</div>
 								<div className="muted">
 									{assignment.instructions}
 								</div>

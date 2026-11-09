@@ -1,16 +1,12 @@
 const express = require("express");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
-
 const Class = require("../models/Class");
 const Enrollment = require("../models/Enrollment");
 const { authenticateToken, requireRole } = require("../middleware/auth");
-
 const router = express.Router();
-
 const asyncRoute = (handler) => (req, res, next) =>
     Promise.resolve(handler(req, res, next)).catch(next);
-
 function generateEnrollmentCode() {
     return crypto.randomBytes(4).toString("hex").toUpperCase();
 }
@@ -30,9 +26,9 @@ router.post(
             return res.status(400).json({ error: "Invalid class details" });
         }
 
-        let createdClass;
+        var createdClass;
 
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (var attempt = 0; attempt < 5; attempt++) {
             try {
                 createdClass = await Class.create({
                     name,

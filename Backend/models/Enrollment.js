@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const enrollmentSchema = new mongoose.Schema(
     {
         studentId: {
@@ -31,7 +30,6 @@ const enrollmentSchema = new mongoose.Schema(
     }
 );
 
-// A student can have only one enrollment record per class.
 enrollmentSchema.index(
     { studentId: 1, classId: 1 },
     { unique: true }
