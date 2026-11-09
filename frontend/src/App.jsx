@@ -1,25 +1,96 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './shared/shared.css'
 import Login from './shared/Login'
 import StudentApp from './student/StudentApp'
 import TeacherApp from './teacher/TeacherApp'
 
-// Prototype only: this will come from the backend session after login.
-// Change role to 'teacher' to preview the teacher side.
-const DEMO_USER = { name: 'Alex', role: 'teacher' }
-
 export default function App() {
-  const [user, setUser] = useState(DEMO_USER)
-  // Prototype: remembers the last account created so logging back in returns to the same role.
-  const [account, setAccount] = useState(null)
-  if (!user) {
-    const handleLogin = (newAccount) => {
-      if (newAccount) setAccount(newAccount)
-      setUser(newAccount || account || DEMO_USER)
+  const [user, setUser] = useState(null)
+  const [token, setToken] = useState(null)
+  const [checkingAuth, setCheckingAuth] = useState(
+    () => Boolean(sessionStorage.getItem('mybread_token'))
+  )
+
+  useEffect(() => {
+    const savedToken = sessionStorage.getItem('mybread_token')
+    if (!savedToken) {
+      return
     }
-    return <Login onLogin={handleLogin} />
+
+    fetch('/api/auth/me', {
+      headers: {
+        Authorization: `Bearer ${savedToken}`
+      }
+    })
+      .then(async response => {
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Session expired')
+        }
+
+        setToken(savedToken)
+        setUser(data.user)
+      })
+      .catch(() => {
+        sessionStorage.removeItem('mybread_token')
+        setToken(null)
+        setUser(null)
+      })
+      .finally(() => {
+        setCheckingAuth(false)
+      })
+  }, [])
+
+  const handleLogin = async ({ email, password }) => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
+
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.error || 'Login failed. Please try again.')
+    }
+    if (!data.token || !data.user) {
+      throw new Error('The server returned an invalid login response.')
+    }
+
+    sessionStorage.setItem('mybread_token', data.token)
+    setToken(data.token)
+    setUser(data.user)
   }
 
-  const logout = () => setUser(null)
-  return user.role === 'teacher' ? <TeacherApp onLogout={logout} /> : <StudentApp onLogout={logout} />
+  const handleSignup = async ({ name, email, password }) => {
+    const response = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password, role: 'student' })
+    })
+    const data = await response.json()
+    if (!response.ok) {
+      throw new Error(data.error || 'Registration failed. Please try again.')
+    }
+
+    await handleLogin({ email, password })
+  }
+
+  const logout = () => {
+    sessionStorage.removeItem('mybread_token')
+    setUser(null)
+    setToken(null)
+  }
+
+  if (checkingAuth) {
+    return <p>Checking your session...</p>
+  }
+  if (!user) {
+    return <Login onLogin={handleLogin} onSignup={handleSignup} />
+  }
+  if (user.role === 'teacher') {
+    return <TeacherApp user={user} token={token} onLogout={logout} />
+  }
+
+  return <StudentApp user={user} token={token} onLogout={logout} />
 }

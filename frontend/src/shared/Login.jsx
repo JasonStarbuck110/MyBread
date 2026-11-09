@@ -2,29 +2,11 @@ import { useState } from 'react'
 import logo from '../assets/logo.png'
 import './login.css'
 
-// Placeholders for the backend. Replace each body with a fetch to POST /api/auth/signup, /api/auth/login
-// or /api/auth/forgot-password, and throw new Error(serverMessage) on a failed response: the form shows
-// that message under the fields.
-const signUpRequest = async ({ name, email, role }) => {
-  await new Promise((resolve) => setTimeout(resolve, 400))
-  return { name: name || 'New user', email, role }
-}
-const logInRequest = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 400))
-}
-// The server should answer the same way whether or not the email has an account,
-// so this form can't be used to find out who is registered.
-const resetPasswordRequest = async () => {
-  await new Promise((resolve) => setTimeout(resolve, 400))
-}
-
-export default function Login({ onLogin }) {
+export default function Login({ onLogin, onSignup }) {
   const [show, setShow] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [mode, setMode] = useState('login') // 'login', 'signup' or 'forgot'
-  const [role, setRole] = useState('student')
   const [error, setError] = useState('')
-  const [sentTo, setSentTo] = useState('') // email the reset link was requested for
   const [submitting, setSubmitting] = useState(false)
   const signup = mode === 'signup'
   const forgot = mode === 'forgot'
@@ -33,7 +15,6 @@ export default function Login({ onLogin }) {
     setShow(false)
     setShowConfirm(false)
     setError('')
-    setSentTo('')
     setMode(next)
   }
 
@@ -44,21 +25,7 @@ export default function Login({ onLogin }) {
     const email = data.get('email').trim()
 
     if (forgot) {
-      if (!email) {
-        setError('Enter your email address.')
-        return
-      }
-      setError('')
-      setSentTo('')
-      setSubmitting(true)
-      try {
-        await resetPasswordRequest({ email })
-        setSentTo(email)
-      } catch (err) {
-        setError(err.message || 'Something went wrong. Please try again.')
-      } finally {
-        setSubmitting(false)
-      }
+      setError('Password reset is not available yet. Contact your MyBread administrator.')
       return
     }
 
@@ -71,10 +38,9 @@ export default function Login({ onLogin }) {
     setSubmitting(true)
     try {
       if (signup) {
-        onLogin(await signUpRequest({ name: data.get('name').trim(), email, password, role }))
+        await onSignup({ name: data.get('name').trim(), email, password })
       } else {
-        await logInRequest({ email, password })
-        onLogin()
+        await onLogin({ email, password })
       }
     } catch (err) {
       setError(err.message || 'Something went wrong. Please try again.')
@@ -94,20 +60,8 @@ export default function Login({ onLogin }) {
         <form key={mode} onSubmit={submit}>
           {forgot ? (
             <>
-              <h2>Reset your password</h2>
-              <div className="field">
-                <label htmlFor="email"><span>Email address</span></label>
-                <input id="email" name="email" type="email" autoComplete="email" />
-              </div>
-              {error && <p className="form-error" role="alert">{error}</p>}
-              {sentTo && (
-                <p className="gain" role="status">
-                  If an account exists for {sentTo}, a reset link is on its way. Check your inbox and spam folder.
-                </p>
-              )}
-              <button className="btn" type="submit" disabled={submitting}>
-                {submitting ? 'Sending…' : (sentTo ? 'Send again' : 'Send reset link')}
-              </button>
+              <h2>Password reset</h2>
+              <p className="muted">Password reset is not available yet. Contact your MyBread administrator.</p>
               <button type="button" className="linkbtn" onClick={() => goTo('login')}>Back to log in</button>
             </>
           ) : (
@@ -118,17 +72,6 @@ export default function Login({ onLogin }) {
                   <label htmlFor="name"><span>Full name</span></label>
                   <input id="name" name="name" type="text" autoComplete="name" />
                 </div>
-              )}
-              {signup && (
-                <fieldset className="role-picker">
-                  <legend>I am a</legend>
-                  {[['student', 'Student'], ['teacher', 'Teacher']].map(([value, label]) => (
-                    <label key={value} className={role === value ? 'selected' : ''}>
-                      <input type="radio" name="role" value={value} checked={role === value} onChange={() => setRole(value)} />
-                      {label}
-                    </label>
-                  ))}
-                </fieldset>
               )}
               <div className="field">
                 <label htmlFor="email"><span>Email address</span></label>
@@ -151,7 +94,6 @@ export default function Login({ onLogin }) {
                 </div>
               )}
               {error && <p className="form-error" role="alert">{error}</p>}
-              {!signup && <label className="remember"><input type="checkbox" defaultChecked /> Remember my password</label>}
               <button className="btn" type="submit" disabled={submitting}>
                 {submitting ? (signup ? 'Creating account…' : 'Logging in…') : (signup ? 'Sign up' : 'Log in')}
               </button>

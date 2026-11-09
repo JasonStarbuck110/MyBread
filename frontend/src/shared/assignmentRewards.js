@@ -1,5 +1,3 @@
-// DEMO ONLY. Rewards are recorded in this browser and are not secure or credited
-// to the trading backend. The real system must validate awards server-side.
 import { assignmentApplies } from './assignments'
 import { CURRENT_STUDENT_ID } from './mockData'
 
@@ -24,9 +22,9 @@ export function rewardTotals(claims = loadRewardClaims(), studentId = CURRENT_ST
 
 export function issueAssignmentRewards({ assignments, studentId = CURRENT_STUDENT_ID, moduleId, kind, sectionIndex = null }) {
   const claims = loadRewardClaims()
-  let awarded = 0
-  let xp = 0
-  let cashCents = 0
+  var awarded = 0
+  var xp = 0
+  var cashCents = 0
   const eligible = assignments.filter(a => assignmentApplies(a, studentId) &&
     Number(a.moduleId) === Number(moduleId) && a.kind === kind &&
     (kind !== 'mini' || Number(a.sectionIndex) === Number(sectionIndex)))

@@ -1,5 +1,3 @@
-
-
 export default function LevelRing({ level, xp, xpNext }) {
   const r = 52
   const c = 2 * Math.PI * r
