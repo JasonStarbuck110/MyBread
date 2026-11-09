@@ -112,8 +112,25 @@ export default function TeacherApp({ user, token, onLogout }) {
             classesError={classesError}
           />
         )}
-        {page === 'lessons' && <Lessons {...shared} />}
-        {page === 'stocks' && <Stocks {...shared} />}
+        {page === 'lessons' && (
+          <Lessons
+            {...shared}
+            token={token}
+            classes={classes}
+            classesLoading={classesLoading}
+            classesError={classesError}
+          />
+        )}
+        {page === 'stocks' && (
+          <Stocks
+            {...shared}
+            openStudent={setSelectedStudent}
+            token={token}
+            classes={classes}
+            classesLoading={classesLoading}
+            classesError={classesError}
+          />
+        )}
         {page === 'links' && <Links />}
       </main>
 

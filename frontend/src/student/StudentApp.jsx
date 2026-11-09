@@ -466,7 +466,17 @@ export default function StudentApp({ user, token, onLogout }) {
             onOpenAssignment={openAssignment}
           />
         )}
-        {page === 'lessons' && <Lessons lessons={lessons} miniProgress={miniProgress} onOpenLesson={openLesson} onOpenMini={openMini} onOpenQuiz={openQuiz} />}
+        {page === 'lessons' && (
+          <Lessons
+            lessons={lessons}
+            miniProgress={miniProgress}
+            onOpenLesson={openLesson}
+            onOpenMini={openMini}
+            onOpenQuiz={openQuiz}
+            assignments={assignments}
+            assignmentsError={assignmentsError}
+          />
+        )}
         {page === 'quiz' && quizId && (
           <LessonView key={`${quizId}-${lessonTarget.mode}-${lessonTarget.sectionIndex}`} lesson={LESSONS.find(l => l.id === quizId)} mode={lessonTarget.mode} sectionIndex={lessonTarget.sectionIndex} progress={lessonProgress} walletStatus={walletRewardStatus[quizId]} onRetryWallet={claimModuleWalletReward} onMiniComplete={completeMini} onBack={() => setPage('lessons')} onResult={completeLesson} />
         )}
@@ -476,7 +486,7 @@ export default function StudentApp({ user, token, onLogout }) {
         {page === 'leaderboards' && <Leaderboards total={total} />}
         {page === 'achievements' && <Achievements />}
         {page === 'links' && <Links links={links} />}
-        {page === 'account' && <Account classes={classes} xp={xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
+        {page === 'account' && <Account user={user} classes={classes} xp={xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
       </main>
       {joinOpen && (<JoinModal classes={classes} onJoin={handleJoinClass} onClose={() => setJoinOpen(false)}/>)}
     </div>

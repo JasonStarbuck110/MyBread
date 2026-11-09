@@ -1,30 +1,29 @@
-import { useEffect, useState } from 'react'
-import { loadAssignments, assignedToStudent, ASSIGNMENTS_EVENT } from '../../shared/assignments'
-import { CURRENT_STUDENT_ID } from '../../shared/mockData'
-import { rewardTotals, loadRewardClaims, REWARDS_EVENT } from '../../shared/assignmentRewards'
+import { useState } from 'react'
 import { allMinisComplete, hasCompletedMini, moduleMiniCount } from '../lessonModule/moduleProgress'
 
-export default function Lessons({ lessons, miniProgress, onOpenMini, onOpenQuiz }) {
+export default function Lessons({ lessons, miniProgress, onOpenMini, onOpenQuiz, assignments = [], assignmentsError = '' }) {
   const [openModules, setOpenModules] = useState([1])
-  const [assignments, setAssignments] = useState(loadAssignments)
-  const [claims, setClaims] = useState(loadRewardClaims)
-  useEffect(() => {
-    const sync = () => setAssignments(loadAssignments())
-    window.addEventListener('storage', sync)
-    window.addEventListener(ASSIGNMENTS_EVENT, sync)
-    return () => { window.removeEventListener('storage', sync); window.removeEventListener(ASSIGNMENTS_EVENT, sync) }
-  }, [])
-  useEffect(() => {
-    const sync = () => setClaims(loadRewardClaims())
-    window.addEventListener('storage', sync)
-    window.addEventListener(REWARDS_EVENT, sync)
-    return () => { window.removeEventListener('storage', sync); window.removeEventListener(REWARDS_EVENT, sync) }
-  }, [])
-  const totals = rewardTotals(claims, CURRENT_STUDENT_ID)
   const assignmentLabel = (id, index, kind) => {
-    const matches = assignedToStudent(assignments, CURRENT_STUDENT_ID, id, index, kind)
-    return matches.length ? matches.map(a => ` · Assigned · Due ${a.due} · ${a.rewardXp || 0} XP + $${((a.rewardCashCents || 0) / 100).toFixed(2)}${claims[`${CURRENT_STUDENT_ID}:${a.id}`] ? ' (reward earned)' : ''}`).join('') : ''
-  }
+	const matches = assignments.filter(assignment =>
+		Number(assignment.moduleId) === Number(id) &&
+		assignment.kind === kind &&
+		(kind !== 'mini' || Number(assignment.sectionIndex) === index)
+	)
+
+	return matches.map(assignment => {
+		const due = assignment.dueDate ? String(assignment.dueDate).slice(0, 10) : 'Not specified'
+		const status = assignment.completionStatus === 'rewarded'
+			? 'Reward earned'
+			: assignment.completionStatus === 'previously_completed'
+				? 'Completed before assignment — no reward'
+				: assignment.completionStatus === 'completed'
+					? 'Completed — reward pending'
+					: 'Assigned'
+
+		return ` · ${status} · Due ${due} · ${assignment.rewardXp || 0} XP + $${((assignment.rewardCashCents || 0) / 100).toFixed(2)}`
+	}).join('')
+}
+
   const toggle = id => setOpenModules(old => old.includes(id) ? old.filter(n => n !== id) : [...old, id])
 
   return (
@@ -32,11 +31,9 @@ export default function Lessons({ lessons, miniProgress, onOpenMini, onOpenQuiz 
       <header className="page-head">
         <h1>Lessons</h1>
         <p>Complete each mini-lesson and its knowledge check, then pass the module quiz (4/5 correct).</p>
-        <p>
-          Teacher assignment rewards earned (demo): {totals.xp} XP · $
-          {(totals.cashCents / 100).toFixed(2)} simulated cash. These are not deposited in
-          your investing wallet.
-        </p>
+        {assignmentsError && (
+          <p role="alert">{assignmentsError}</p>
+        )}
       </header>
       <section className="panel">
         <div className="module-list">
