@@ -1,3 +1,7 @@
+const TradingPortfolio = require("../models/TradingPortfolio");
+const { getMarketPrices } = require("../trading/marketData");
+const { calculatePortfolioValue } = require("../trading/analytics");
+
 const express = require("express");
 const crypto = require("crypto");
 const mongoose = require("mongoose");
@@ -182,6 +186,108 @@ router.get(
                 }))
         });
     })
+);
+
+
+router.get(
+	"/:classId/leaderboard",
+	authenticateToken,
+	requireRole("student"),
+	asyncRoute(async (req, res) => {
+		const classId = req.params.classId;
+
+		if (!mongoose.isValidObjectId(classId)) {
+			return res.status(400).json({ error: "Invalid class ID" });
+		}
+
+		const [classroom, membership] = await Promise.all([
+			Class.findOne({ _id: classId, status: "active" })
+				.select("_id name")
+				.lean(),
+			Enrollment.exists({
+				classId,
+				studentId: req.user.id,
+				status: "active"
+			})
+		]);
+
+		if (!classroom || !membership) {
+			return res.status(404).json({ error: "Class not found or student not enrolled" });
+		}
+
+		const enrollments = await Enrollment.find({
+			classId,
+			status: "active"
+		}).populate({
+			path: "studentId",
+			match: { role: "student", isActive: true },
+			select: "name"
+		}).lean();
+
+		const members = enrollments
+			.filter(item => item.studentId)
+			.map(item => item.studentId);
+		const studentIds = members.map(person => String(person._id));
+
+		const portfolios = await TradingPortfolio.find({
+			studentId: { $in: studentIds }
+		}).select("studentId cashCents holdings").lean();
+
+		const holdingsOf = portfolio => portfolio.holdings instanceof Map
+			? Object.fromEntries(portfolio.holdings)
+			: portfolio.holdings || {};
+
+		const symbols = [...new Set(portfolios.flatMap(portfolio =>
+			Object.entries(holdingsOf(portfolio))
+				.filter(([, units]) => units > 0)
+				.map(([symbol]) => symbol)
+		))];
+
+		var prices;
+		try {
+			prices = await getMarketPrices(symbols);
+		} catch {
+			return res.status(503).json({
+				error: "Live market prices are unavailable. Try again shortly."
+			});
+		}
+
+		const portfoliosByStudent = new Map(
+			portfolios.map(portfolio => [String(portfolio.studentId), portfolio])
+		);
+
+		const ranking = members.map(person => {
+			const id = String(person._id);
+			const portfolio = portfoliosByStudent.get(id);
+			const valueCents = portfolio
+				? calculatePortfolioValue({
+					cashCents: portfolio.cashCents,
+					holdings: holdingsOf(portfolio)
+				}, prices)
+				: 0;
+
+			return {
+				id,
+				name: person.name,
+				valueCents
+			};
+		}).sort((a, b) =>
+			b.valueCents - a.valueCents ||
+			a.name.localeCompare(b.name) ||
+			a.id.localeCompare(b.id)
+		);
+
+		return res.json({
+			class: {
+				id: String(classroom._id),
+				name: classroom.name
+			},
+			ranking: ranking.map((student, index) => ({
+				...student,
+				rank: index + 1
+			}))
+		});
+	})
 );
 
 module.exports = router;

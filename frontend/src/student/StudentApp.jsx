@@ -464,7 +464,13 @@ export default function StudentApp({ user, token, onLogout }) {
         {page === 'stocks' && (
           <Stocks cash={cash} holdings={holdings} total={total} stockValue={stockValue} gain={portfolioData?.gain} backendPrices={portfolioData?.prices} portfolioError={portfolioError} refreshPortfolio={refreshPortfolio} />
         )}
-        {page === 'leaderboards' && <Leaderboards total={total} />}
+        {page === 'leaderboards' && (
+          <Leaderboards
+            user={user}
+            token={token}
+            classes={classes}
+          />
+        )}
         {page === 'achievements' && <Achievements />}
         {page === 'links' && <Links links={links} />}
         {page === 'account' && <Account user={user} classes={classes} xp={xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
