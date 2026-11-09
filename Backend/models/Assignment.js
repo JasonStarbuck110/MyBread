@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const assignmentSchema = new mongoose.Schema(
     {
         title: {
@@ -29,6 +28,54 @@ const assignmentSchema = new mongoose.Schema(
             required: true
         },
 
+        moduleId: {
+            type: Number,
+            min: 1,
+            max: 5,
+            default: null
+        },
+
+        kind: {
+            type: String,
+            enum: ["module", "mini", "quiz"],
+            default: null
+        },
+
+        sectionIndex: {
+            type: Number,
+            min: 0,
+            max: 4,
+            default: null
+        },
+
+        recipientType: {
+            type: String,
+            enum: ["class", "student"],
+            default: "class"
+        },
+
+        studentId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: null
+        },
+
+        rewardXp: {
+            type: Number,
+            min: 0,
+            max: 100000,
+            default: 0,
+            validate: Number.isSafeInteger
+        },
+
+        rewardCashCents: {
+            type: Number,
+            min: 0,
+            max: 10000000,
+            default: 0,
+            validate: Number.isSafeInteger
+        },
+
         dueDate: {
             type: Date,
             default: null
@@ -40,6 +87,7 @@ const assignmentSchema = new mongoose.Schema(
             default: "draft"
         }
     },
+
     {
         timestamps: true,
         collection: "assignments"

@@ -1,80 +1,126 @@
-import { lessons, stockPrices } from '../data'
-import {
-  formatMoney, formatChange, formatDate, getStatus, countLessonsDone,
-  getQuizAverage, getLevel, getHoldingValue, getPortfolioValue, getProfit, getWarnings,
-} from '../helpers'
+import { LESSONS } from '../../student/lessonModule/catalog'
 
-function LessonTag({ student, index }) {
-  const status = getStatus(student, index)
-  if (status === 'done') return <span className="t-tag t-tag-green">{student.progress[index]}%</span>
-  if (status === 'in progress') return <span className="t-tag t-tag-tan">In progress</span>
-  if (status === 'late') return <span className="t-tag t-tag-red">Late</span>
-  return <span className="t-tag">Not started</span>
+function formatCents(value) {
+	return (value / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+}
+
+function LessonTag({ completed, miniCount, totalMinis, score }) {
+	if (completed) return <span className="t-tag t-tag-green">Completed{typeof score === 'number' ? ` · ${score}%` : ''}</span>
+	if (miniCount > 0) return <span className="t-tag t-tag-tan">{miniCount}/{totalMinis} mini-lessons</span>
+	return <span className="t-tag">Not started</span>
 }
 
 export default function StudentDrawer({ student, onClose }) {
-  const quizAvg = getQuizAverage(student)
-  const profit = getProfit(student)
-  const warnings = getWarnings(student)
+	const completedModules = new Set(student.completedModules || [])
+	const minis = student.miniLessons || []
+	const portfolio = student.portfolio
+	const totalCents = portfolio?.totalCents
+	const gainCents = portfolio?.gainCents
+	const holdings = portfolio?.holdings || []
+	const transactions = portfolio?.transactions || []
 
-  return (
-    <>
-      <div className="t-drawer-top">
-        <div>
-          <h2>{student.name}</h2>
-          <p className="t-gray">Level {getLevel(student)}</p>
-        </div>
-        <button className="t-close-btn" onClick={onClose} aria-label="Close">&times;</button>
-      </div>
+	return (
+		<>
+			<div className="t-drawer-top">
+				<div>
+					<h2>{student.name}</h2>
+					<p className="t-gray">Level {student.level} · {student.email}</p>
+					<p className="t-small t-gray">{(student.classes || []).map(item => item.name).join(', ')}</p>
+				</div>
+				<button className="t-close-btn" onClick={onClose} aria-label="Close">&times;</button>
+			</div>
 
-      {warnings.length > 0 && (
-        <p style={{ marginBottom: 16 }}>
-          {warnings.map((w) => <span key={w} className="t-tag t-tag-red" style={{ marginRight: 6 }}>{w}</span>)}
-        </p>
-      )}
+			<div className="t-student-numbers">
+				<div><b>{student.xp}</b><span>XP</span></div>
+				<div><b>{student.quizAverage === null ? '—' : `${student.quizAverage}%`}</b><span>Quiz avg</span></div>
+				<div><b>{completedModules.size}/{LESSONS.length}</b><span>Modules</span></div>
+			</div>
 
-      <div className="t-student-numbers">
-        <div><b>{student.xp}</b><span>XP</span></div>
-        <div><b>{quizAvg === null ? '-' : quizAvg + '%'}</b><span>Quiz avg</span></div>
-        <div><b>{countLessonsDone(student)}/{lessons.length}</b><span>Lessons</span></div>
-      </div>
+			<div className="t-card">
+				<h3>Lessons</h3>
+				{LESSONS.map(lesson => {
+					const miniCount = new Set(minis.filter(item => item.moduleId === lesson.id).map(item => item.sectionIndex)).size
+					const score = student.bestScores?.[String(lesson.id)]
+					return (
+						<div className="t-row" key={lesson.id}>
+							<div className="t-row-text">
+								<div className="t-row-title">{lesson.title}</div>
+								<div className="t-row-subtitle">
+									{miniCount}/{lesson.screens.length} mini-lessons completed
+									{typeof score === 'number' ? ` · Best quiz: ${score}%` : ''}
+								</div>
+							</div>
+							<LessonTag
+								completed={completedModules.has(lesson.id)}
+								miniCount={miniCount}
+								totalMinis={lesson.screens.length}
+								score={score}
+							/>
+						</div>
+					)
+				})}
+			</div>
 
-      <div className="t-card">
-        <h3>Lessons</h3>
-        {lessons.map((lesson, i) => (
-          <div className="t-row" key={lesson.title}>
-            <div className="t-row-text">
-              <div className="t-row-title">{lesson.title}</div>
-              <div className="t-row-subtitle">Due {formatDate(lesson.due)}</div>
-            </div>
-            <LessonTag student={student} index={i} />
-          </div>
-        ))}
-      </div>
+			<div className="t-card">
+				<h3>
+					Portfolio: {typeof totalCents === 'number' ? formatCents(totalCents) : portfolio ? 'Market value unavailable' : 'Not started'}
+				</h3>
 
-      <div className="t-card">
-        <h3>Portfolio: {formatMoney(getPortfolioValue(student))}</h3>
-        <p className={'t-small ' + (profit >= 0 ? 't-green' : 't-red')}>{formatChange(profit)} since start</p>
-        <p className="t-small t-gray" style={{ margin: '4px 0 10px' }}>Cash: {formatMoney(student.cash)}</p>
-        {student.holdings.length === 0 ? (
-          <div className="t-nothing-here">No stocks yet.</div>
-        ) : (
-          <table>
-            <thead><tr><th>Stock</th><th>Shares</th><th>Value</th></tr></thead>
-            <tbody>
-              {student.holdings.map((h) => (
-                <tr key={h.ticker}>
-                  <td><b>{h.ticker}</b> <span className="t-gray">{stockPrices[h.ticker].name}</span></td>
-                  <td>{h.shares}</td>
-                  <td>{formatMoney(getHoldingValue(h))}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+				{typeof gainCents === 'number' && (
+					<p className={`t-small ${gainCents >= 0 ? 't-green' : 't-red'}`}>
+						{gainCents >= 0 ? '+' : '−'}{formatCents(Math.abs(gainCents))} realized and unrealized gain
+					</p>
+				)}
 
-      <button className="t-btn t-btn-outline" onClick={onClose}>Close</button>
-    </>
-  )
+				{portfolio && (
+					<p className="t-small t-gray" style={{ margin: '4px 0 10px' }}>
+						Cash: {formatCents(portfolio.cashCents)}
+					</p>
+				)}
+
+				{holdings.length === 0 ? (
+					<div className="t-nothing-here">No stocks held.</div>
+				) : (
+					<table>
+						<thead>
+							<tr><th>Stock</th><th>Shares</th><th>Value</th></tr>
+						</thead>
+						<tbody>
+							{holdings.map(holding => (
+								<tr key={holding.symbol}>
+									<td><b>{holding.symbol}</b></td>
+									<td>{holding.shares.toLocaleString('en-US', { maximumFractionDigits: 6 })}</td>
+									<td>{typeof holding.valueCents === 'number' ? formatCents(holding.valueCents) : 'Unavailable'}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				)}
+			</div>
+
+			<div className="t-card">
+				<h3>Recent trades</h3>
+				{transactions.length === 0 ? (
+					<div className="t-nothing-here">No trades yet.</div>
+				) : (
+					<table>
+						<thead>
+							<tr><th>Action</th><th>Stock</th><th>Amount</th></tr>
+						</thead>
+						<tbody>
+							{transactions.map((trade, index) => (
+								<tr key={`${trade.timestamp}-${trade.symbol}-${index}`}>
+									<td>{trade.type}</td>
+									<td>{trade.symbol}</td>
+									<td>{formatCents(trade.amountCents)}</td>
+								</tr>
+							))}
+						</tbody>
+					</table>
+				)}
+			</div>
+
+			<button className="t-btn t-btn-outline" onClick={onClose}>Close</button>
+		</>
+	)
 }

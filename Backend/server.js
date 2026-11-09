@@ -19,6 +19,7 @@ const PORT = Number(process.env.PORT || 3001);
 const classesRoutes = require("./routes/classes");
 
 app.use(express.json({limit: "8kb"}));
+app.use("/api/assignments", require("./routes/assignments"));
 app.use("/api/student", require("./routes/studentTrading"));
 
 app.get("/api/health", (req, res) => {
@@ -44,7 +45,10 @@ app.use("/api", (req, res, next) => {
         path.startsWith("/auth/") ||
         path.startsWith("/classes/") ||
         path === "/classes" ||
+        path.startsWith("/assignments/") ||
+        path === "/assignments" ||
         path.startsWith("/learning/") ||
+        path.startsWith("/teacher/reports/") ||
         path === "/learning";
 
     if (!allowed) {
@@ -58,6 +62,10 @@ app.use("/api", (req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/learning", learningRoutes);
 app.use("/api/classes", classesRoutes);
+app.use(
+    "/api/teacher/reports",
+    require("./routes/teacherReports")
+);
 
 app.use(require("./trading/moduleRewards"));
 

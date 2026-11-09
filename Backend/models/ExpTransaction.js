@@ -25,7 +25,7 @@ const expTransactionSchema = new mongoose.Schema(
 
         sourceType: {
             type: String,
-            enum: ["lesson", "quiz"],
+            enum: ["lesson", "quiz", "assignment"],
             required: true
         },
 

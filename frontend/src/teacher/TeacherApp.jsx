@@ -23,21 +23,23 @@ const NAV = [
 export default function TeacherApp({ user, token, onLogout }) {
   const [page, setPage] = useState('dashboard')
   const [selectedId, setSelectedId] = useState(null)
+  const [selectedStudent, setSelectedStudent] = useState(null)
   const [message, setMessage] = useState('')
   const timer = useRef(null)
   const [classes, setClasses] = useState([])
   const [classesLoading, setClassesLoading] = useState(true)
   const [classesError, setClassesError] = useState('')
-
-  const student = students.find((s) => s.id === selectedId) || null
-  const closeStudent = () => setSelectedId(null)
-
+  const student = selectedStudent || students.find(s => s.id === selectedId) || null
+  const closeStudent = () => {
+    setSelectedId(null)
+    setSelectedStudent(null)
+  }
   const goTo = (id) => {
     setPage(id)
     setSelectedId(null)
+    setSelectedStudent(null)
     window.scrollTo(0, 0)
   }
-
   const notify = (text) => {
     setMessage(text)
     clearTimeout(timer.current)
@@ -45,13 +47,18 @@ export default function TeacherApp({ user, token, onLogout }) {
   }
 
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && setSelectedId(null)
+  const onKey = event => {
+    if (event.key === 'Escape') {
+      setSelectedId(null)
+      setSelectedStudent(null)
+    }
+  }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
   useEffect(() => {
-    let cancelled = false
+    var cancelled = false
 
     const loadClasses = async () => {
       try {
@@ -95,7 +102,16 @@ export default function TeacherApp({ user, token, onLogout }) {
       <main className="main">
         {page === 'dashboard' && (<Dashboard user={user} classes={classes} classesLoading={classesLoading} classesError={classesError} setPage={goTo} />)}
         {page === 'classes' && (<Classes token={token} classes={classes} setClasses={setClasses} classesLoading={classesLoading} classesError={classesError} />)}
-        {page === 'students' && <Students {...shared} />}
+        {page === 'students' && (
+          <Students
+            {...shared}
+            openStudent={setSelectedStudent}
+            token={token}
+            classes={classes}
+            classesLoading={classesLoading}
+            classesError={classesError}
+          />
+        )}
         {page === 'lessons' && <Lessons {...shared} />}
         {page === 'stocks' && <Stocks {...shared} />}
         {page === 'links' && <Links />}

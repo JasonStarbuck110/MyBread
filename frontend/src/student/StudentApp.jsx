@@ -12,17 +12,14 @@ import { saveProgress } from './lessonModule/progress'
 import { hasCompletedMini, allMinisComplete } from './lessonModule/moduleProgress'
 import './moduleStyles.css'
 import JoinModal from './components/JoinModal'
-import { joinClass } from '../shared/classes'
+import { joinClass, fetchEnrolledClasses } from '../shared/classes'
 import { STOCKS } from './data'
 import { fetchPortfolio, creditModuleReward, syncMiniRewards } from './tradingApi'
 import { useLinks } from '../shared/useLinks'
-import { loadAssignments } from '../shared/assignments'
-import { issueAssignmentRewards, loadRewardClaims, rewardTotals, REWARDS_EVENT } from '../shared/assignmentRewards'
-import { CURRENT_STUDENT_ID } from '../shared/mockData'
 import logo from '../assets/logo.png'
 import './student.css'
 import { fetchLearningProgress, submitLessonAttempt, completeMiniLesson } from './learningApi'
-import { fetchEnrolledClasses } from '../shared/classes'
+import { fetchAssignedLessons, syncAssignmentRewards } from './assignmentApi'
 
 const NAV = [
   ['home', 'Dashboard'],
@@ -41,18 +38,15 @@ export default function StudentApp({ user, token, onLogout }) {
   const [portfolioError, setPortfolioError] = useState('')
   const [miniRewardNotice, setMiniRewardNotice] = useState('')
   const [classes, setClasses] = useState([])
+  const [assignments, setAssignments] = useState([])
+  const [assignmentsError, setAssignmentsError] = useState('')
+  const [assignmentRefresh, setAssignmentRefresh] = useState(0)
+  const [assignmentRewardNotice, setAssignmentRewardNotice] = useState('')
   const [, setClassesError] = useState('')
   const [, setClassesLoading] = useState(true)
   const [joinOpen, setJoinOpen] = useState(false)
   const [links] = useLinks()
   const [xp, setXp] = useState(0)
-  const [teacherRewardTotals, setTeacherRewardTotals] = useState(() => rewardTotals(loadRewardClaims(), CURRENT_STUDENT_ID))
-  useEffect(() => {
-    const sync = () => setTeacherRewardTotals(rewardTotals(loadRewardClaims(), CURRENT_STUDENT_ID))
-    window.addEventListener(REWARDS_EVENT, sync)
-    window.addEventListener('storage', sync)
-    return () => { window.removeEventListener(REWARDS_EVENT, sync); window.removeEventListener('storage', sync) }
-  }, [])
   const [lessonProgress, setLessonProgress] = useState({})
   const [, setProgressLoading] = useState(true)
   const [, setProgressError] = useState('')
@@ -68,7 +62,7 @@ export default function StudentApp({ user, token, onLogout }) {
   }
 
   useEffect(() => {
-    let cancelled = false
+    var cancelled = false
 
     const loadServerProgress = async () => {
       setProgressLoading(true)
@@ -77,16 +71,33 @@ export default function StudentApp({ user, token, onLogout }) {
       try {
         // Backfill earlier mini-lesson completions before reading EXP.
         // The backend validates DB records and credits each only once.
-        let rewards = null
+        var rewards = null
         try {
           rewards = await syncMiniRewards()
         } catch (rewardError) {
           if (!cancelled) setMiniRewardNotice(`Mini rewards could not sync: ${rewardError.message}`)
         }
+        var assignmentReward = null
+
+        try {
+          assignmentReward = await syncAssignmentRewards(token)
+          if (!cancelled) setAssignmentRefresh(current => current + 1)
+          if (!cancelled && assignmentReward.awardedCount > 0) {
+            setAssignmentRewardNotice(
+              `Assignment rewards: +$${(assignmentReward.earnedCashCents / 100).toFixed(2)} and +${assignmentReward.earnedXp} XP.`
+            )
+          }
+        } catch (error) {
+          if (!cancelled) {
+            setAssignmentRewardNotice(`Assignment rewards could not be confirmed: ${error.message}`)
+          }
+        }
         const data = await fetchLearningProgress(token)
-        if (rewards?.awardedCount && !cancelled) {
-          setMiniRewardNotice(`Mini-lesson rewards: +$${(rewards.earnedCashCents / 100).toFixed(2)} and +${rewards.earnedXp} XP.`)
-          setCash(rewards.cashCents / 100)
+        if ((rewards?.awardedCount || assignmentReward?.awardedCount) && !cancelled) {
+          if (rewards?.awardedCount) {
+            setMiniRewardNotice(`Mini-lesson rewards: +$${(rewards.earnedCashCents / 100).toFixed(2)} and +${rewards.earnedXp} XP.`)
+          }
+          setCash((assignmentReward?.cashCents ?? rewards.cashCents) / 100)
           // Refresh the market valuation after server-side backfill.
           try {
             const fresh = await fetchPortfolio()
@@ -154,6 +165,34 @@ export default function StudentApp({ user, token, onLogout }) {
       throw error
     }
   }
+
+  const reconcileAssignmentRewards = async () => {
+    try {
+      const result = await syncAssignmentRewards(token)
+
+      setAssignmentRefresh(current => current + 1)
+      if (result.awardedCount === 0) return
+
+      setXp(result.totalExp)
+      setCash(result.cashCents / 100)
+      setPortfolioData(previous => previous ? {
+        ...previous,
+        cash: result.cashCents / 100,
+        total: previous.total - previous.cash + result.cashCents / 100
+      } : previous)
+      setAssignmentRewardNotice(
+        `Assignment rewards: +$${(result.earnedCashCents / 100).toFixed(2)} and +${result.earnedXp} XP.`
+      )
+
+      try {
+        await refreshPortfolio()
+      } catch (error) {
+        setPortfolioError(`Assignment rewards were saved, but portfolio prices could not refresh: ${error.message}`)
+      }
+    } catch (error) {
+      setAssignmentRewardNotice(`Assignment rewards could not be confirmed: ${error.message}. Refresh to retry.`)
+    }
+  }
   useEffect(() => { refreshPortfolio().catch(() => {}) }, [])
   const stockValue = portfolioData?.stockValue ?? Object.entries(holdings).reduce((s, [t, sh]) => s + sh * (STOCKS[t]?.price || 0), 0)
   const total = portfolioData?.total ?? cash + stockValue
@@ -165,7 +204,7 @@ export default function StudentApp({ user, token, onLogout }) {
   const activePage = page === 'quiz' ? 'lessons' : page
 
   useEffect(() => {
-    let cancelled = false
+    var cancelled = false
 
     const loadClasses = async () => {
       setClassesLoading(true)
@@ -186,12 +225,38 @@ export default function StudentApp({ user, token, onLogout }) {
       }
     }
 
-    loadClasses()
+
+	loadClasses()
 
     return () => {
       cancelled = true
     }
   }, [token])
+
+  useEffect(() => {
+    var cancelled = false
+
+    async function loadAssignedLessons() {
+      try {
+        const records = await fetchAssignedLessons(token)
+        if (!cancelled) {
+          setAssignments(records)
+          setAssignmentsError('')
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setAssignments([])
+          setAssignmentsError(error.message)
+        }
+      }
+    }
+
+    if (token) loadAssignedLessons()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token, classes, assignmentRefresh])
 
   const openMini = (id, sectionIndex) => {
     const lesson = lessons.find(l => l.id === id)
@@ -220,11 +285,37 @@ export default function StudentApp({ user, token, onLogout }) {
     else openQuiz(id)
   }
 
-  const awardTeacherRewards = (id, kind, sectionIndex = null) => {
-    try {
-      issueAssignmentRewards({ assignments: loadAssignments(), studentId: CURRENT_STUDENT_ID, moduleId: id, kind, sectionIndex })
-      setTeacherRewardTotals(rewardTotals(loadRewardClaims(), CURRENT_STUDENT_ID))
-    } catch (error) { console.warn('Teacher reward could not be stored locally', error) }
+  const openAssignment = assignment => {
+    const id = Number(assignment.moduleId)
+    const lesson = lessons.find(item => item.id === id)
+    if (!lesson || lesson.status === 'todo') {
+      setPage('lessons')
+      return
+    }
+
+    if (assignment.kind === 'mini') {
+      const section = Number(assignment.sectionIndex)
+
+      if (section > 0 && !hasCompletedMini(miniProgress, id, section - 1)) {
+        setPage('lessons')
+        return
+      }
+
+      openMini(id, section)
+      return
+    }
+
+    if (assignment.kind === 'quiz') {
+      if (!allMinisComplete(lesson, miniProgress)) {
+        setPage('lessons')
+        return
+      }
+
+      openQuiz(id)
+      return
+    }
+
+    openLesson(id)
   }
 
   const completeMini = async (id, sectionIndex, answerIndex) => {
@@ -255,7 +346,7 @@ export default function StudentApp({ user, token, onLogout }) {
         setPortfolioError('Portfolio quotes unavailable; mini-lesson reward was still saved.')
       }
     }
-    awardTeacherRewards(id, 'mini', sectionIndex)
+    await reconcileAssignmentRewards()
   }
 
   // The server decides whether a quiz reward is payable. Never use client XP
@@ -323,17 +414,14 @@ export default function StudentApp({ user, token, onLogout }) {
           score: result.percent
         }
       }
-
       saveProgress(next)
       return next
     })
 
     if (result.passed) {
-      awardTeacherRewards(id, 'quiz')
-      awardTeacherRewards(id, 'module')
-
       // Keep the existing cash wallet reward separate from EXP.
       await claimModuleWalletReward(id, selectedAnswers)
+      await reconcileAssignmentRewards()
     }
 
     return result
@@ -357,7 +445,27 @@ export default function StudentApp({ user, token, onLogout }) {
       </aside>
       <main className="main">
         {miniRewardNotice && <p role="status" style={{ margin: '8px 18px', color: '#3C6E4D' }}>{miniRewardNotice}</p>}
-        {page === 'home' && <Home user={user} total={total} cash={cash} xp={xp} lessons={lessons} setPage={setPage} onOpenLesson={openLesson} classes={classes} onJoin={() => setJoinOpen(true)} />}
+        {assignmentRewardNotice && (
+          <p role="status" style={{ margin: '8px 18px' }}>
+            {assignmentRewardNotice}
+          </p>
+        )}
+        {page === 'home' && (
+          <Home
+            user={user}
+            total={total}
+            cash={cash}
+            xp={xp}
+            lessons={lessons}
+            setPage={setPage}
+            onOpenLesson={openLesson}
+            classes={classes}
+            onJoin={() => setJoinOpen(true)}
+            assignments={assignments}
+            assignmentsError={assignmentsError}
+            onOpenAssignment={openAssignment}
+          />
+        )}
         {page === 'lessons' && <Lessons lessons={lessons} miniProgress={miniProgress} onOpenLesson={openLesson} onOpenMini={openMini} onOpenQuiz={openQuiz} />}
         {page === 'quiz' && quizId && (
           <LessonView key={`${quizId}-${lessonTarget.mode}-${lessonTarget.sectionIndex}`} lesson={LESSONS.find(l => l.id === quizId)} mode={lessonTarget.mode} sectionIndex={lessonTarget.sectionIndex} progress={lessonProgress} walletStatus={walletRewardStatus[quizId]} onRetryWallet={claimModuleWalletReward} onMiniComplete={completeMini} onBack={() => setPage('lessons')} onResult={completeLesson} />
@@ -368,7 +476,7 @@ export default function StudentApp({ user, token, onLogout }) {
         {page === 'leaderboards' && <Leaderboards total={total} />}
         {page === 'achievements' && <Achievements />}
         {page === 'links' && <Links links={links} />}
-        {page === 'account' && <Account classes={classes} xp={xp + teacherRewardTotals.xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
+        {page === 'account' && <Account classes={classes} xp={xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
       </main>
       {joinOpen && (<JoinModal classes={classes} onJoin={handleJoinClass} onClose={() => setJoinOpen(false)}/>)}
     </div>
