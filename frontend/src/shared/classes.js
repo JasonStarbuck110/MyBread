@@ -47,3 +47,9 @@ export function joinClass(token, enrollmentCode) {
 export function fetchEnrolledClasses(token) {
   return classRequest('/enrolled', token)
 }
+
+export function fetchClassLeaderboard(token, classId) {
+	return classRequest(`/${encodeURIComponent(classId)}/leaderboard`, token, {
+		cache: 'no-store'
+	})
+}
