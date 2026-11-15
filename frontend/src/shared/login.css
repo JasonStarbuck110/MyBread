@@ -22,6 +22,7 @@
 .form-error { color: #B3261E; font-size: 0.9rem; margin: 0.35rem 0 0; }
 .switch-mode { text-align: center; margin: 1.25rem 0 0; font-size: 0.95rem; }
 .linkbtn.inline { display: inline; margin: 0; padding: 0; }
+.password-hint {color: #4E3B31; font-size: 0.85rem; margin: 0.35rem 0 0; }
 @media (max-width: 800px) {
   .login { grid-template-columns: 1fr; }
   .login-art { padding: 1.5rem; }

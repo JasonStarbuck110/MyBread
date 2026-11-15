@@ -30,6 +30,12 @@ export default function Login({ onLogin, onSignup }) {
     }
 
     const password = data.get('password')
+
+    if (signup && password.length < 12 || password.length > 128) {
+      setError("Password must be between 12 and 128 characters.")
+      return
+    }
+
     if (signup && password !== data.get('confirm')) {
       setError("Passwords don't match.")
       return
@@ -70,25 +76,28 @@ export default function Login({ onLogin, onSignup }) {
               {signup && (
                 <div className="field">
                   <label htmlFor="name"><span>Full name</span></label>
-                  <input id="name" name="name" type="text" autoComplete="name" />
+                  <input id="name" name="name" type="text" autoComplete="name" required/>
                 </div>
               )}
               <div className="field">
                 <label htmlFor="email"><span>Email address</span></label>
-                <input id="email" name="email" type="email" autoComplete="email" />
+                <input id="email" name="email" type="email" autoComplete="email" required />
               </div>
               <div className="field">
                 <label htmlFor="password"><span>Password</span></label>
                 <div className="pw">
-                  <input id="password" name="password" type={show ? 'text' : 'password'} autoComplete={signup ? 'new-password' : 'current-password'} />
+                  <input id="password" name="password" type={show ? 'text' : 'password'} autoComplete={signup ? 'new-password' : 'current-password'} minLength={signup ? 12 : undefined} maxLength={signup ? 128 : undefined} required />
                   <button type="button" className="show" onClick={() => setShow(!show)}>{show ? 'Hide' : 'Show'}</button>
                 </div>
+                {signup && (
+                  <p className="password-hint">Password must be at least 12 characters long.</p>
+                )}
               </div>
               {signup && (
                 <div className="field">
                   <label htmlFor="confirm"><span>Confirm password</span></label>
                   <div className="pw">
-                    <input id="confirm" name="confirm" type={showConfirm ? 'text' : 'password'} autoComplete="new-password" onChange={() => setError('')} />
+                    <input id="confirm" name="confirm" required type={showConfirm ? 'text' : 'password'} autoComplete="new-password" onChange={() => setError('')} />
                     <button type="button" className="show" onClick={() => setShowConfirm(!showConfirm)}>{showConfirm ? 'Hide' : 'Show'}</button>
                   </div>
                 </div>
