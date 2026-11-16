@@ -1,6 +1,9 @@
 // All of this data is fake for now. When the backend is ready,
 // we'll load teacher, lessons, stockPrices and students from the API instead.
 
+// All of this data is fake for now. When the backend is ready,
+// we'll load teacher, lessons, stockPrices and students from the API instead.
+
 const today = new Date("2026-10-20");
 const STARTING_CASH = 500;
 
@@ -114,22 +117,15 @@ const sampleStudents = [
   }
 ];
 
-// Classes this teacher has created.
-// BRD-4821 is the same code the student side uses for Period 3.
-// New classes start with no students until students join with the code.
+// The teacher's classes. New classes start with no students.
 let classes = [
-  { name: "Personal Finance, Period 3", code: "BRD-4821", created: "2026-08-20T08:00:00", students: sampleStudents }
+  { name: "Personal Finance, Period 3", code: "BRD-4821", students: sampleStudents }
 ];
 
-// Classes made with the Create class button are saved in the browser
-// so they're still there after a refresh. Later this will be the database.
-try {
-  const saved = JSON.parse(localStorage.getItem("mybread-classes")) || [];
-  for (const c of saved) {
-    classes.push({ name: c.name, code: c.code, created: c.created, students: [] });
-  }
-} catch (error) {
-  // if saving isn't available, just start with the sample class
+// load classes saved from before
+const savedClasses = JSON.parse(localStorage.getItem("mybread-classes")) || [];
+for (const c of savedClasses) {
+  classes.push({ name: c.name, code: c.code, students: [] });
 }
 
 let currentClass = classes[0];
@@ -979,22 +975,20 @@ function showPage() {
 
 // ---------- Classes (dropdown + create class) ----------
 
-// Bar at the top right of every page
+// Dropdown, class code and Create class button at the top of every page
 function showClassBar() {
-  // newest classes first
-  const sorted = [...classes].sort((a, b) => new Date(b.created) - new Date(a.created));
-
+  // newest classes at the top of the list
   let options = "";
-  for (const c of sorted) {
-    const selected = c.code === currentClass.code ? "selected" : "";
+  for (let i = classes.length - 1; i >= 0; i--) {
+    const c = classes[i];
+    let selected = "";
+    if (c.code === currentClass.code) selected = "selected";
     options += `<option value="${c.code}" ${selected}>${c.name}</option>`;
   }
 
   document.getElementById("class-bar").innerHTML = `
-    <select id="class-select" onchange="switchClass(this.value)" aria-label="Choose a class">
-      ${options}
-    </select>
-    <span class="tag" title="Students enter this code to join">Code: ${currentClass.code}</span>
+    <select onchange="switchClass(this.value)">${options}</select>
+    <span class="tag">Code: ${currentClass.code}</span>
     <button class="btn btn-green" onclick="openClassModal()">+ Create class</button>
   `;
 
@@ -1007,7 +1001,7 @@ function switchClass(code) {
   showPage();
 }
 
-// What every page shows for a class nobody has joined yet
+// Shown when no students have joined the class yet
 function showEmptyClass() {
   document.getElementById("page").innerHTML = `
     <div class="page-header">
@@ -1026,13 +1020,10 @@ function showEmptyClass() {
   `;
 }
 
-// Makes a code like BRD-5832 that no other class is using
+// Makes a code like BRD-5832
 function makeClassCode() {
-  let code;
-  do {
-    code = "BRD-" + Math.floor(1000 + Math.random() * 9000);
-  } while (classes.some(c => c.code === code));
-  return code;
+  const number = Math.floor(1000 + Math.random() * 9000);
+  return "BRD-" + number;
 }
 
 function openClassModal() {
@@ -1041,9 +1032,8 @@ function openClassModal() {
     <form onsubmit="createClass(event)">
       <label class="field">
         <span>Class name</span>
-        <input id="new-class-name" placeholder="Personal Finance, Period 4" required maxlength="60">
+        <input id="new-class-name" placeholder="Personal Finance, Period 4" required>
       </label>
-      <p class="small gray">We'll make a class code for students to join with.</p>
       <div class="modal-buttons">
         <button class="btn btn-green" type="submit">Create class</button>
         <button class="btn btn-outline" type="button" onclick="closeClassModal()">Cancel</button>
@@ -1051,34 +1041,27 @@ function openClassModal() {
     </form>
   `;
   document.getElementById("class-modal").classList.add("open");
-  document.getElementById("new-class-name").focus();
 }
 
 function createClass(event) {
-  event.preventDefault();
-  const name = document.getElementById("new-class-name").value.trim();
-  if (name === "") return;
+  event.preventDefault(); // stops the form from reloading the page
+  const name = document.getElementById("new-class-name").value;
 
-  const newClass = {
-    name: name,
-    code: makeClassCode(),
-    created: new Date().toISOString(),
-    students: []
-  };
+  const newClass = { name: name, code: makeClassCode(), students: [] };
   classes.push(newClass);
   saveClasses();
 
-  // switch to the new class right away
+  // switch to the new class
   currentClass = newClass;
   students = newClass.students;
   showPage();
 
-  // show the code so the teacher can share it
+  // show the new code in the popup
   document.getElementById("class-modal-box").innerHTML = `
     <h2>Class created!</h2>
     <p class="gray">${newClass.name}</p>
     <div class="big-code">${newClass.code}</div>
-    <p class="small gray">Give this code to your students. They enter it under Join class.</p>
+    <p class="small gray">Give this code to your students so they can join.</p>
     <div class="modal-buttons">
       <button class="btn btn-green" onclick="copyCode('${newClass.code}')">Copy code</button>
       <button class="btn btn-outline" onclick="closeClassModal()">Done</button>
@@ -1090,26 +1073,18 @@ function closeClassModal() {
   document.getElementById("class-modal").classList.remove("open");
 }
 
+// Save the classes the teacher made (not the sample one) in the browser
 function saveClasses() {
-  // the sample class isn't saved, only ones the teacher made
-  const made = classes
-    .filter(c => c.code !== "BRD-4821")
-    .map(c => ({ name: c.name, code: c.code, created: c.created }));
-  try {
-    localStorage.setItem("mybread-classes", JSON.stringify(made));
-  } catch (error) {
-    // saving isn't available (private window), the class still works until refresh
+  const toSave = [];
+  for (let i = 1; i < classes.length; i++) {
+    toSave.push({ name: classes[i].name, code: classes[i].code });
   }
+  localStorage.setItem("mybread-classes", JSON.stringify(toSave));
 }
 
 function copyCode(code) {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(code)
-      .then(() => showMessage("Copied " + code))
-      .catch(() => showMessage("Class code: " + code));
-  } else {
-    showMessage("Class code: " + code);
-  }
+  navigator.clipboard.writeText(code);
+  showMessage("Copied " + code);
 }
 
 
