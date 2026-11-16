@@ -1,8 +1,10 @@
+import VerifyEmail from './shared/VerifyEmail'
 import { useEffect, useState } from 'react'
 import './shared/shared.css'
 import Login from './shared/Login'
 import StudentApp from './student/StudentApp'
 import TeacherApp from './teacher/TeacherApp'
+import ResetPassword from './shared/ResetPassword'
 
 export default function App() {
   const [user, setUser] = useState(null)
@@ -73,13 +75,21 @@ export default function App() {
       throw new Error(data.error || 'Registration failed. Please try again.')
     }
 
-    await handleLogin({ email, password })
+    return data;
   }
 
   const logout = () => {
     sessionStorage.removeItem('mybread_token')
     setUser(null)
     setToken(null)
+  }
+
+  if (window.location.pathname === '/verify-email') {
+    return <VerifyEmail />
+  }
+
+  if (window.location.pathname === '/reset-password') {
+    return <ResetPassword />
   }
 
   if (checkingAuth) {

@@ -24,12 +24,25 @@ async function authenticateToken(req, res, next) {
 
         const decoded = jwt.verify(token, secret);
         const user = await User.findById(decoded.userId).select(
-            "_id name email role isActive"
+            "_id name email role isActive emailVerificationRequired emailVerifiedAt tokenVersion"
         );
 
         if (!user || !user.isActive) {
             return res.status(401).json({
                 error: "Invalid or Inactive Account"
+            });
+        }
+
+        if (user.emailVerificationRequired && !user.emailVerifiedAt) {
+            return res.status(403).json({
+                error: "Email verification required.",
+                requiresEmailVerification: true
+            });
+        }
+
+        if ((decoded.tokenVersion ?? 0) !== (user.tokenVersion ?? 0)) {
+            return res.status(401).json({
+                error: "Your session has expired. Please log in again."
             });
         }
 
