@@ -1,13 +1,9 @@
 import { useEffect, useState } from 'react'
+import { createClass } from '../../shared/classes'
 
-// Placeholder for the backend. Replace the body with a fetch to POST /api/classes that returns { name, code }.
-// The server should generate the join code and make sure it is unique; this modal just shows what comes back.
-const createClassRequest = async (name) => {
-  await new Promise((resolve) => setTimeout(resolve, 400))
-  return { name, code: `BRD-${Math.floor(1000 + Math.random() * 9000)}` }
-}
-
-export default function CreateClassModal({ onClose }) {
+// Popup for the "Create class" button. Saves the class with POST /api/classes;
+// the backend makes the enrollment code and we show it to the teacher.
+export default function CreateClassModal({ token, onCreated, onClose }) {
   const [name, setName] = useState('')
   const [created, setCreated] = useState(null)
   const [error, setError] = useState('')
@@ -27,8 +23,11 @@ export default function CreateClassModal({ onClose }) {
     setCreated(null)
     setSubmitting(true)
     try {
-      setCreated(await createClassRequest(trimmed))
+      const data = await createClass(token, trimmed)
+      const newClass = data.class || data
+      setCreated(newClass)
       setName('')
+      onCreated(newClass)
     } catch (err) {
       setError(err.message || 'Could not create the class. Please try again.')
     } finally {
@@ -40,12 +39,19 @@ export default function CreateClassModal({ onClose }) {
     <div className="modal-bg" onClick={onClose}>
       <form className="modal" role="dialog" aria-modal="true" aria-label="New class" onClick={(e) => e.stopPropagation()} onSubmit={create}>
         <h3>New class</h3>
-        <label className="field"><span>Name</span>
-          <input autoFocus value={name} onChange={(e) => setName(e.target.value)} />
+        <label className="field"><span>Class name</span>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Example: Personal Finance, Period 4"
+            maxLength={100}
+            required
+          />
         </label>
         {created && (
           <p className="gain" role="status">
-            Created {created.name}. Students can join with code {created.code}.
+            Created {created.name}. Students can join with code <strong>{created.enrollmentCode}</strong>.
           </p>
         )}
         {error && <p className="loss" role="alert">{error}</p>}

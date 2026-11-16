@@ -12,10 +12,11 @@ function formatCents(value) {
 	return (value / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
 }
 
-export default function Students({ token, classes = EMPTY_CLASSES, classesLoading = false, classesError = '', openStudent }) {
+export default function Students({ token, classes = EMPTY_CLASSES, activeClassId = '', classesLoading = false, classesError = '', openStudent }) {
 	const [search, setSearch] = useState('')
 	const [filter, setFilter] = useState('all')
-	const [classFilter, setClassFilter] = useState('all')
+	// starts on the class picked in the top-right dropdown
+	const [classFilter, setClassFilter] = useState(activeClassId || 'all')
 	const [students, setStudents] = useState([])
 	const [loading, setLoading] = useState(true)
 	const [error, setError] = useState('')

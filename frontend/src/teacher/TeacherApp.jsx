@@ -10,6 +10,7 @@ import { students } from './data'
 import './teacher.css'
 import { fetchTeacherClasses } from '../shared/classes'
 import Classes from './pages/Classes'
+import CreateClassModal from './components/CreateClassModal'
 
 const NAV = [
   ['dashboard', 'Dashboard'],
@@ -29,7 +30,11 @@ export default function TeacherApp({ user, token, onLogout }) {
   const [classes, setClasses] = useState([])
   const [classesLoading, setClassesLoading] = useState(true)
   const [classesError, setClassesError] = useState('')
-  const student = selectedStudent || students.find(s => s.id === selectedId) || null
+  const [createOpen, setCreateOpen] = useState(false)
+  const [activeClassId, setActiveClassId] = useState('')
+  // the class picked in the top-right dropdown (newest class if none picked yet)
+  const activeClass = classes.find(c => String(c._id) === activeClassId) || classes[0] || null
+  const student =selectedStudent || students.find(s => s.id === selectedId) || null
   const closeStudent = () => {
     setSelectedId(null)
     setSelectedStudent(null)
@@ -78,6 +83,12 @@ export default function TeacherApp({ user, token, onLogout }) {
     }
   }, [token])
 
+  // new class goes to the top of the list and becomes the selected class
+  const handleClassCreated = (newClass) => {
+    setClasses(previous => [newClass, ...previous])
+    setActiveClassId(String(newClass._id))
+  }
+
   const shared = { openStudent: setSelectedId, notify }
 
   return (
@@ -99,23 +110,44 @@ export default function TeacherApp({ user, token, onLogout }) {
         </div>
       </aside>
       <main className="main">
+        <div className="t-class-bar">
+          {classes.length > 0 && (
+            <>
+              <select
+                aria-label="Select a class"
+                value={activeClass ? String(activeClass._id) : ''}
+                onChange={e => setActiveClassId(e.target.value)}
+              >
+                {classes.map(c => (
+                  <option key={c._id} value={String(c._id)}>{c.name}</option>
+                ))}
+              </select>
+              <span className="t-tag">Code: {activeClass?.enrollmentCode}</span>
+            </>
+          )}
+          <button className="t-btn t-btn-green" onClick={() => setCreateOpen(true)}>+ Create class</button>
+        </div>
         {page === 'dashboard' && (<Dashboard user={user} classes={classes} classesLoading={classesLoading} classesError={classesError} setPage={goTo} />)}
         {page === 'classes' && (<Classes token={token} classes={classes} setClasses={setClasses} classesLoading={classesLoading} classesError={classesError} />)}
         {page === 'students' && (
           <Students
+            key={activeClassId}
             {...shared}
             openStudent={setSelectedStudent}
             token={token}
             classes={classes}
+            activeClassId={activeClassId}
             classesLoading={classesLoading}
             classesError={classesError}
           />
         )}
         {page === 'lessons' && (
           <Lessons
+            key={activeClassId}
             {...shared}
             token={token}
             classes={classes}
+            activeClassId={activeClassId}
             classesLoading={classesLoading}
             classesError={classesError}
           />
@@ -137,6 +169,9 @@ export default function TeacherApp({ user, token, onLogout }) {
         {student && <StudentDrawer student={student} onClose={closeStudent} />}
       </div>
       <div className={'t-message' + (message ? ' t-show' : '')} role="status">{message}</div>
+      {createOpen && (
+        <CreateClassModal token={token} onCreated={handleClassCreated} onClose={() => setCreateOpen(false)} />
+      )}
     </div>
   )
 }

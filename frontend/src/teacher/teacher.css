@@ -611,3 +611,21 @@
 .t-field { display: block; margin-bottom: 16px; }
 .t-field span { display: block; font-size: 14px; color: var(--gray-text); margin-bottom: 6px; }
 .t-field input { width: 100%; padding: 11px 14px; border: 2px solid var(--tan); border-radius: 10px; font-family: inherit; font-size: 15px; background: var(--white); }
+
+/* Class dropdown + Create class button (top right of every teacher page) */
+.t-class-bar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.t-class-bar select {
+  padding: 10px 14px;
+  border: 2px solid var(--tan);
+  border-radius: 10px;
+  font: inherit;
+  background: var(--white);
+  max-width: 280px;
+}

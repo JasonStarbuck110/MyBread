@@ -37,10 +37,10 @@ const formatTarget = a => {
   return section?.title || `Mini-lesson ${module.id}.${Number(a.sectionIndex) + 1}`
 }
 
-export default function Lessons({ notify, token, classes = [], classesLoading = false, classesError = '' }) {
+export default function Lessons({ notify, token, classes = [], activeClassId = '', classesLoading = false, classesError = '' }) {
   const [assignments, setAssignments] = useState([])
   const [students, setStudents] = useState([])
-  const [classId, setClassId] = useState('')
+  const [classId, setClassId] = useState(activeClassId) // starts on the class picked in the top-right dropdown
   const [title, setTitle] = useState('')
   const [instructions, setInstructions] = useState('')
   const [loading, setLoading] = useState(true)
