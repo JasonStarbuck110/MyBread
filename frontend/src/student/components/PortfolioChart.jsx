@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { fetchHistory } from '../tradingApi'
 import { money } from '../data'
 import './portfolioChart.css'
@@ -40,45 +40,37 @@ function chartPoints(raw) {
 export default function PortfolioChart({ total }) {
   const [range, setRange] = useState('1D')
   const [view, setView] = useState('value')
-  const [points, setPoints] = useState([])
+  const requestKey = JSON.stringify([range, total])
+  const [history, setHistory] = useState({ key: null, points: [], error: '' })
   const [hoverIndex, setHoverIndex] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const loading = history.key !== requestKey
+  const points = loading ? [] : history.points
+  const error = loading ? '' : history.error
+  const gradientId = useId().replaceAll(':', '')
 
   useEffect(() => {
-    let mounted = true
-    setLoading(true)
-    setError('')
-    setHoverIndex(null)
-
+    var mounted = true
     fetchHistory(range)
       .then((response) => {
-        if (mounted) setPoints(chartPoints(response.points))
+        if (mounted) setHistory({ key: requestKey, points: chartPoints(response.points), error: '' })
       })
       .catch((err) => {
-        if (mounted) {
-          setPoints([])
-          setError(err?.message || 'Unable to load portfolio history.')
-        }
-      })
-      .finally(() => {
-        if (mounted) setLoading(false)
+        if (mounted) setHistory({ key: requestKey, points: [], error: err?.message || 'Unable to load portfolio history.' })
       })
 
     return () => { mounted = false }
-  }, [range, total])
+  }, [range, total, requestKey])
 
   const first = points[0]
   const last = points[points.length - 1]
-  const inspected = hoverIndex === null ? last : points[hoverIndex]
+  const activeHoverIndex = hoverIndex !== null && hoverIndex < points.length ? hoverIndex : null
+  const inspected = activeHoverIndex === null ? last : points[activeHoverIndex]
   const hasHistory = points.length > 1
   const gainChange = first && inspected ? inspected.gain - first.gain : 0
   const fundingChange = first && inspected ? inspected.funding - first.funding : 0
   const positive = gainChange >= 0
-  const chartColor = gainChange < 0 ? '#d95d39' : '#3c6e4d'
-  const amounts = points.map((point) =>
-    view === 'value' ? point.value : point.gain - (first?.gain ?? 0)
-  )
+  const chartColor = first && last && last.gain < first.gain ? '#EF4444' : 'var(--green)'
+  const amounts = points.map((point) => view === 'value' ? point.value : point.gain - (first?.gain ?? 0))
   const min = amounts.length ? Math.min(...amounts) : 0
   const max = amounts.length ? Math.max(...amounts) : 1
   const margin = Math.max((max - min) * 0.2, Math.abs(max) * 0.008, 0.05)
@@ -120,7 +112,7 @@ export default function PortfolioChart({ total }) {
           )}
         </p>
         <p className="portfolio-overview-inspection" aria-live="off">
-          {hoverIndex !== null && inspected ? dateLabel(inspected.timestamp, range) : '\u00a0'}
+          {activeHoverIndex !== null && inspected ? dateLabel(inspected.timestamp, range) : '\u00a0'}
         </p>
       </header>
       {loading && (
@@ -141,12 +133,19 @@ export default function PortfolioChart({ total }) {
       {!loading && !error && hasHistory && (
         <div className="portfolio-overview-plot">
           <svg
+
             viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
             role="img"
             aria-label={`${range} portfolio ${view === 'value' ? 'account value' : 'investment gain'} history. Starting value ${money(first.value)}, latest value ${money(last.value)}.`}
             onPointerMove={inspect}
             onPointerLeave={() => setHoverIndex(null)}
           >
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={chartColor} stopOpacity=".22" />
+              <stop offset="100%" stopColor={chartColor} stopOpacity="0" />
+            </linearGradient>
+          </defs>          
             <line
               x1={LEFT}
               x2={RIGHT}
@@ -158,19 +157,24 @@ export default function PortfolioChart({ total }) {
               strokeDasharray="1.5 6"
             />
             <path
+              d={`${line} L${RIGHT},${BOTTOM} L${LEFT},${BOTTOM} Z`}
+              fill={`url(#${gradientId})`}
+              stroke="none"
+            />
+            <path
               d={line}
               stroke={chartColor}
-              strokeWidth="2.8"
+              strokeWidth="2.4"
               strokeLinejoin="round"
               strokeLinecap="round"
               fill="none"
               vectorEffect="non-scaling-stroke"
             />
-            {hoverIndex !== null && (
+            {activeHoverIndex !== null && (
               <g>
                 <line
-                  x1={toX(hoverIndex)}
-                  x2={toX(hoverIndex)}
+                  x1={toX(activeHoverIndex)}
+                  x2={toX(activeHoverIndex)}
                   y1={TOP}
                   y2={BOTTOM}
                   stroke="currentColor"
@@ -179,7 +183,7 @@ export default function PortfolioChart({ total }) {
                 />
                 <circle
                   cx={toX(hoverIndex)}
-                  cy={toY(amounts[hoverIndex])}
+                  cy={toY(amounts[activeHoverIndex])}
                   r="5"
                   fill={chartColor}
                   stroke="white"
@@ -197,7 +201,7 @@ export default function PortfolioChart({ total }) {
             type="button"
             className={range === option ? 'is-active' : ''}
             aria-pressed={range === option}
-            onClick={() => setRange(option)}
+            onClick={() => { setRange(option); setHoverIndex(null) }}
           >
             {option}
           </button>

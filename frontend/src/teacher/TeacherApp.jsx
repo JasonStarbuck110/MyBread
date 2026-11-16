@@ -8,30 +8,38 @@ import Links from './pages/Links'
 import StudentDrawer from './components/StudentDrawer'
 import { students } from './data'
 import './teacher.css'
+import { fetchTeacherClasses } from '../shared/classes'
+import Classes from './pages/Classes'
 
 const NAV = [
   ['dashboard', 'Dashboard'],
   ['students', 'Students'],
+  ['classes', 'Classes'],
   ['lessons', 'Lessons'],
   ['stocks', 'Stocks'],
   ['links', 'Links'],
 ]
 
-export default function TeacherApp({ onLogout }) {
+export default function TeacherApp({ user, token, onLogout }) {
   const [page, setPage] = useState('dashboard')
   const [selectedId, setSelectedId] = useState(null)
+  const [selectedStudent, setSelectedStudent] = useState(null)
   const [message, setMessage] = useState('')
   const timer = useRef(null)
-
-  const student = students.find((s) => s.id === selectedId) || null
-  const closeStudent = () => setSelectedId(null)
-
+  const [classes, setClasses] = useState([])
+  const [classesLoading, setClassesLoading] = useState(true)
+  const [classesError, setClassesError] = useState('')
+  const student = selectedStudent || students.find(s => s.id === selectedId) || null
+  const closeStudent = () => {
+    setSelectedId(null)
+    setSelectedStudent(null)
+  }
   const goTo = (id) => {
     setPage(id)
     setSelectedId(null)
+    setSelectedStudent(null)
     window.scrollTo(0, 0)
   }
-
   const notify = (text) => {
     setMessage(text)
     clearTimeout(timer.current)
@@ -39,10 +47,36 @@ export default function TeacherApp({ onLogout }) {
   }
 
   useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && setSelectedId(null)
+  const onKey = event => {
+    if (event.key === 'Escape') {
+      setSelectedId(null)
+      setSelectedStudent(null)
+    }
+  }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [])
+
+  useEffect(() => {
+    var cancelled = false
+
+    const loadClasses = async () => {
+      try {
+        const data = await fetchTeacherClasses(token)
+        if (!cancelled) setClasses(data.classes || [])
+      } catch (error) {
+        if (!cancelled) setClassesError(error.message)
+      } finally {
+        if (!cancelled) setClassesLoading(false)
+      }
+    }
+
+    loadClasses()
+
+    return () => {
+      cancelled = true
+    }
+  }, [token])
 
   const shared = { openStudent: setSelectedId, notify }
 
@@ -64,15 +98,40 @@ export default function TeacherApp({ onLogout }) {
           <button className="nav" onClick={onLogout}>Log out</button>
         </div>
       </aside>
-
       <main className="main">
-        {page === 'dashboard' && <Dashboard setPage={goTo} {...shared} />}
-        {page === 'students' && <Students {...shared} />}
-        {page === 'lessons' && <Lessons {...shared} />}
-        {page === 'stocks' && <Stocks {...shared} />}
+        {page === 'dashboard' && (<Dashboard user={user} classes={classes} classesLoading={classesLoading} classesError={classesError} setPage={goTo} />)}
+        {page === 'classes' && (<Classes token={token} classes={classes} setClasses={setClasses} classesLoading={classesLoading} classesError={classesError} />)}
+        {page === 'students' && (
+          <Students
+            {...shared}
+            openStudent={setSelectedStudent}
+            token={token}
+            classes={classes}
+            classesLoading={classesLoading}
+            classesError={classesError}
+          />
+        )}
+        {page === 'lessons' && (
+          <Lessons
+            {...shared}
+            token={token}
+            classes={classes}
+            classesLoading={classesLoading}
+            classesError={classesError}
+          />
+        )}
+        {page === 'stocks' && (
+          <Stocks
+            {...shared}
+            openStudent={setSelectedStudent}
+            token={token}
+            classes={classes}
+            classesLoading={classesLoading}
+            classesError={classesError}
+          />
+        )}
         {page === 'links' && <Links />}
       </main>
-
       <div className={'t-overlay' + (student ? ' t-open' : '')} onClick={closeStudent} />
       <div className={'t-drawer' + (student ? ' t-open' : '')} role="dialog" aria-label="Student details" aria-hidden={!student}>
         {student && <StudentDrawer student={student} onClose={closeStudent} />}

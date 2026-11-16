@@ -1,8 +1,4 @@
-// Quiz content from Brendan's lesson page, keyed by lesson id.
-// Later this comes from the backend. Note: in a real app the correct answers
-// should stay on the server and be checked there, not shipped to the browser.
-export const QUIZ_MONEY_PER_CORRECT = 20 // simulated cash earned per correct answer
-
+export const QUIZ_MONEY_PER_CORRECT = 20
 export const QUIZZES = {
   3: {
     title: 'Diversification essentials',

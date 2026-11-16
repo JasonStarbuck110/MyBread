@@ -11,14 +11,11 @@ export default function Quiz({ lesson, quiz, onBack, onComplete }) {
   const [submitted, setSubmitted] = useState(false)
   const [score, setScore] = useState(0)
   const [complete, setComplete] = useState(false)
-
   const question = questions[current]
   const isLast = current === questions.length - 1
   const progress = complete ? 100 : ((current + 1) / questions.length) * 100
-
   const handleContinue = () => {
     if (selected === null) return
-
     if (!submitted) {
       setSubmitted(true)
       if (selected === question.correct) setScore((value) => value + 1)
@@ -50,7 +47,6 @@ export default function Quiz({ lesson, quiz, onBack, onComplete }) {
         <span aria-hidden="true">←</span>
         <span>Back to lessons</span>
       </button>
-
       <div className="q-lesson">
         <div className="q-lesson-meta">
           <div>
@@ -61,11 +57,9 @@ export default function Quiz({ lesson, quiz, onBack, onComplete }) {
             {complete ? 'Complete' : `Question ${current + 1} of ${questions.length}`}
           </p>
         </div>
-
         <div className="q-progress-track" aria-label={`${Math.round(progress)}% complete`}>
           <span style={{ width: `${progress}%` }} />
         </div>
-
         {complete ? (
           <section className="q-completion-card">
             <p className="q-kicker">Lesson complete</p>
@@ -93,7 +87,6 @@ export default function Quiz({ lesson, quiz, onBack, onComplete }) {
               <h1>{question.question}</h1>
               <p className="q-helper">{question.helper}</p>
             </div>
-
             <div className="q-answer-list" role="radiogroup" aria-label="Answer choices">
               {question.answers.map((answer, index) => {
                 const isSelected = selected === index
@@ -120,7 +113,6 @@ export default function Quiz({ lesson, quiz, onBack, onComplete }) {
                 )
               })}
             </div>
-
             {submitted && (
               <div className={selected === question.correct ? 'q-feedback q-correct' : 'q-feedback'}>
                 <strong>{selected === question.correct ? 'Correct!' : 'Not quite'}</strong>
@@ -131,7 +123,6 @@ export default function Quiz({ lesson, quiz, onBack, onComplete }) {
                 </span>
               </div>
             )}
-
             <div className="q-question-footer">
               <button className="q-primary-button" type="button" disabled={selected === null} onClick={handleContinue}>
                 {submitted ? (isLast ? 'See results' : 'Next question') : 'Check answer'}

@@ -2,7 +2,6 @@ const { SHARE_SCALE } = require("./trading");
 
 function calculatePortfolioValue(portfolio, marketPrices) {
     var investmentValueCents = 0;
-
     for (const [symbol, sharesUnits] of Object.entries(portfolio.holdings)) {
         if (!Number.isSafeInteger(sharesUnits) || sharesUnits < 0) {
             throw new Error(`Invalid Holdings for ${symbol}`);
@@ -48,7 +47,6 @@ function calculatePortfolioValue(portfolio, marketPrices) {
 function calculateProfitLoss(portfolio, marketPrices) {
     const positions = {};
     var realizedGainCents = 0;
-
     for (const transaction of portfolio.transactions) {
         const {type, symbol, sharesUnits, amountCents } = transaction;
         if(!positions[symbol]) {
@@ -80,7 +78,6 @@ function calculateProfitLoss(portfolio, marketPrices) {
 
     var unrealizedGainCents = 0;
     const stockPerformance = {};
-
     for (const [symbol, position] of Object.entries(positions)) {
         if (position.sharesUnits !== (portfolio.holdings[symbol] ?? 0)) {
             throw new Error(`Holdings Mismatch for ${symbol}`);

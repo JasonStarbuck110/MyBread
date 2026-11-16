@@ -10,7 +10,6 @@ export default function ClassChart() {
   const bottom = 30
   const min = Math.min(...values) - 2
   const max = Math.max(...values) + 2
-
   const points = values.map((v, i) => {
     const x = left + (i / (values.length - 1)) * (width - left)
     const y = 10 + (1 - (v - min) / (max - min)) * (height - bottom - 10)

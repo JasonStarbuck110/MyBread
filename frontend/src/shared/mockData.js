@@ -25,7 +25,7 @@ export const STOCK_PRICES = {
 // XP needed to reach each level (level 1 starts at 0). Placeholder until the gamification rules are final.
 const LEVEL_STARTS = [0, 100, 250, 500, 800, 1200]
 export function getLevelInfo(xp) {
-  let level = 1
+  var level = 1
   LEVEL_STARTS.forEach((start, i) => { if (xp >= start) level = i + 1 })
   return { level, xpNext: LEVEL_STARTS[level] ?? xp }
 }

@@ -1,41 +1,54 @@
 import { useState } from 'react'
-import { gradeLesson } from './progress'
 import '../quiz.css'
 
-export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, progress, walletStatus, onRetryWallet, onResult, onMiniComplete, onBack }) {
+export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, walletStatus, onRetryWallet, onResult, onMiniComplete, onBack }) {
   const [phase, setPhase] = useState('reading')
   const [choice, setChoice] = useState(null)
   const [answers, setAnswers] = useState({})
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [submittedAnswers, setSubmittedAnswers] = useState(null)
-
+  const [submitting, setSubmitting] = useState(false)
   const screen = lesson.screens?.[sectionIndex]
   const check = screen?.checkQuestion
   const correct = check && choice === check.correct
   const questions = lesson.questions || []
   const pass = lesson.passingCorrect || Math.ceil(questions.length * 0.8)
   const goTop = () => window.scrollTo(0, 0)
-
-  const finish = () => {
+  const finish = async () => {
     const selected = questions.map((_, i) => answers[i])
+
     if (selected.some(answer => !Number.isInteger(answer))) return
+
+    setSubmittedAnswers(selected)
+    setError('')
+    setSubmitting(true)
+
     try {
-      const outcome = gradeLesson(lesson, selected, progress)
-      setSubmittedAnswers(selected)
-      setResult(outcome)
-      Promise.resolve(onResult(lesson.id, outcome, selected)).catch(err => {
-        setError(err.message || 'Could not process lesson completion')
-      })
-      setError('')
+      const serverResult = await onResult(lesson.id, selected)
+      setResult(serverResult)
       goTop()
-    } catch (err) { setError(err.message || 'Could not grade quiz') }
+    } catch (err) {
+      setError(err.message || 'Could not submit quiz')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  const finishMini = () => {
+  const finishMini = async () => {
     if (check && !correct) return
-    onMiniComplete(lesson.id, sectionIndex)
-    onBack()
+
+    setError('')
+    setSubmitting(true)
+
+    try {
+      await onMiniComplete(lesson.id, sectionIndex, choice)
+      onBack()
+    } catch (err) {
+      setError(err.message || 'Could not save mini-lesson completion')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return <div className="q-root">
@@ -73,10 +86,17 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
           {check ? <fieldset style={{ border: 0 }}><legend style={{ fontWeight: 700, marginBottom: 12 }}>{check.question}</legend>{check.answers.map((answer, i) => <label key={i} className={'q-answer' + (choice === i ? ' q-selected' : '')} style={{ display: 'flex', gap: 10, margin: '8px 0' }}><input type="radio" name={`check-${lesson.id}-${sectionIndex}`} checked={choice === i} onChange={() => setChoice(i)}/>{answer}</label>)}</fieldset> : <p>No check question was provided for this mini-lesson.</p>}
           {choice !== null && <p role="status">{correct ? check.explanation : 'Not quite. Review the reading and try another answer.'}</p>}
         </div>
+        {error && (
+          <p role="alert" style={{ color: '#b91c1c', padding: '0 24px' }}>
+            {error}
+          </p>
+        )}
         <div style={{ padding: '0 24px 32px', display: 'flex', gap: 12 }}>
           <button className="q-primary-button" onClick={() => { setPhase('reading'); goTop() }}>← Reading</button>
-          <button className="q-primary-button" disabled={Boolean(check) && !correct} onClick={finishMini}>Complete mini-lesson →</button>
-        </div>
+          <button className="q-primary-button" disabled={submitting || (Boolean(check) && !correct)} onClick={finishMini}>
+            {submitting ? 'Saving...' : 'Complete mini-lesson →'}
+          </button>        
+      </div>
       </section> : result ? 
       <section className="q-completion-card" style={{ padding: 32 }}>
         <h1>{result.passed ? 'Module passed' : 'Try again'}</h1>
@@ -84,7 +104,9 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
         {result.passed && (
           <>
             <p>
-              {result.earnedXp ? `Earned ${result.earnedXp} XP.` : 'Module XP already earned.'}
+              {result.xpAwarded > 0
+              ? `Earned ${result.xpAwarded} EXP.`
+              : 'EXP for this module has already been earned.'}
             </p>
             <p role="status" aria-live="polite">
               <strong>Investing wallet: </strong>
@@ -121,7 +143,8 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, pr
         {error && <p role="alert">{error}</p>}
       <div style={{ padding: '0 24px 32px', display: 'flex', gap: 12 }}>
         <button className="q-primary-button" onClick={onBack}>← Modules</button>
-        <button className="q-primary-button" disabled={questions.some((_, i) => answers[i] === undefined)} onClick={finish}>Submit review</button>
+        <button className="q-primary-button" disabled={submitting || questions.some((_, i) => answers[i] === undefined)}
+          onClick={finish}>{submitting ? 'Submitting…' : 'Submit review'}</button>
       </div>
       </section>}
     </div>

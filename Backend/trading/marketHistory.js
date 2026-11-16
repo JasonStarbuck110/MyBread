@@ -86,7 +86,6 @@ async function getHistoricalPrices(symbol, range) {
         }
         return { timestamp, priceCents };
     }).filter(Boolean).sort((a, b) => a.timestamp - b.timestamp);
-
     if (prices.length === 0) throw new Error("No historical prices returned");
     const result = { symbol, timezone, interval: config.interval, prices };
     cache.set(cacheKey, { fetchedAt: now, data: result });

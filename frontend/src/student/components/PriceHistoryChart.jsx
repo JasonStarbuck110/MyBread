@@ -10,17 +10,15 @@ const dateLabel = (value, range) => new Intl.DateTimeFormat(undefined,
 
 export default function PriceHistoryChart({ symbol, total, refreshKey }) {
   const [range, setRange] = useState('1M')
-  const [points, setPoints] = useState([])
+  const requestKey = JSON.stringify([range, symbol, refreshKey])
+  const [history, setHistory] = useState({ key: null, points: [], error: '' })
   const [selected, setSelected] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const loading = history.key !== requestKey
+  const points = loading ? [] : history.points
+  const error = loading ? '' : history.error
   const gradientId = useId().replaceAll(':', '')
   useEffect(() => {
-    let active = true
-    setLoading(true)
-    setError('')
-    setPoints([])
-    setSelected(null)
+    var active = true
     fetchHistory(range, symbol).then(data => {
       if (!active) return
       const parsed = (data.points || []).map(p => ({
@@ -28,15 +26,18 @@ export default function PriceHistoryChart({ symbol, total, refreshKey }) {
         value: Number((symbol ? p.priceCents : p.totalValueCents) / 100)
       })).filter(p => Number.isFinite(p.value) && p.value >= 0 && Number.isFinite(Date.parse(p.timestamp)))
         .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
-      setPoints(parsed)
-    }).catch(err => { if (active) setError(err.message) })
-      .finally(() => { if (active) setLoading(false) })
+      setHistory({ key: requestKey, points: parsed, error: '' })
+    }).catch(err => {
+      if (active) setHistory({ key: requestKey, points: [], error: err.message || 'History unavailable.' })
+    })
     return () => { active = false }
-  }, [range, symbol, refreshKey])
+  }, [range, symbol, refreshKey, requestKey])
 
   const first = points[0]
   const last = points.at(-1)
   const inspected = points[selected] || last
+  const isNegative = points.length >= 2 && last.value < first.value
+  const lineColor = isNegative ? '#EF4444' : 'var(--green)'
   const change = first && inspected ? inspected.value - first.value : 0
   const changePercent = first?.value > 0 ? change / first.value * 100 : null
   const min = Math.min(...points.map(p => p.value))
@@ -67,7 +68,7 @@ export default function PriceHistoryChart({ symbol, total, refreshKey }) {
     </div>
     <div className="tabs history-ranges" role="group" aria-label="Historical price range">
       {RANGES.map(r => <button type="button" key={r} aria-pressed={range === r}
-        className={range === r ? 'tab on' : 'tab'} onClick={() => setRange(r)}>{r}</button>)}
+        className={range === r ? 'tab on' : 'tab'} onClick={() => { setRange(r); setSelected(null) }}>{r}</button>)}
     </div>
     {loading && <p className="muted" role="status">Loading historical prices…</p>}
     {!loading && error && <p className="loss" role="alert">Historical prices unavailable: {error}</p>}
@@ -76,16 +77,21 @@ export default function PriceHistoryChart({ symbol, total, refreshKey }) {
       <svg viewBox="0 0 720 250" className="chart" role="img"
         aria-label={`${symbol || 'Portfolio'} price history for ${range}. Starts at ${money(first.value)}, ends at ${money(last.value)}.`}
         onPointerMove={inspect} onPointerLeave={() => setSelected(null)}>
-        <defs><linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="var(--green)" stopOpacity=".22"/><stop offset="100%" stopColor="var(--green)" stopOpacity="0"/></linearGradient></defs>
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={lineColor} stopOpacity=".22" />
+            <stop offset="100%" stopColor={lineColor} stopOpacity="0" />
+          </linearGradient>
+        </defs>        
         {ticks.map((v, i) => <g key={i}>
           <line x1="64" x2="674" y1={toY(v)} y2={toY(v)} stroke="currentColor" strokeOpacity=".12" strokeDasharray="3 5" />
           <text x="58" y={toY(v) + 4} fontSize="11" textAnchor="end" fill="currentColor">{money(v)}</text>
         </g>)}
         <path d={`${path} L674,225 L64,225 Z`} fill={`url(#${gradientId})`}/>
-        <path d={path} className="chart-line" strokeWidth="2.4"/>
+        <path d={path} className="chart-line" style={{ stroke: lineColor }} strokeWidth="2.4"/>
         {selected !== null && <g>
           <line x1={toX(selected)} x2={toX(selected)} y1="18" y2="225" stroke="currentColor" strokeOpacity=".4" strokeDasharray="4 4"/>
-          <circle cx={toX(selected)} cy={toY(points[selected].value)} r="5" fill="var(--green)" stroke="white" strokeWidth="2"/>
+          <circle cx={toX(selected)} cy={toY(points[selected].value)} r="5" fill={lineColor} stroke="white" strokeWidth="2"/>
         </g>}
         {[0, Math.floor((points.length - 1) / 2), points.length - 1].map((index, i) => <text key={i} x={toX(index)} y="243" fontSize="12" textAnchor={i === 0 ? 'start' : i === 2 ? 'end' : 'middle'} fill="currentColor">{dateLabel(points[index].timestamp, range)}</text>)}
       </svg>
