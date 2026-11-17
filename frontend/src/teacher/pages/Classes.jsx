@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { createClass, fetchClassStudents } from '../../shared/classes'
+import ClassQRCodeModal from '../components/ClassQRCodeModal'
 
 export default function Classes({ token, classes, setClasses, classesLoading, classesError }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [qrClass, setQrClass] = useState(null)
   const [selectedClass, setSelectedClass] = useState(null)
   const [students, setStudents] = useState([])
   const [studentsLoading, setStudentsLoading] = useState(false)
@@ -99,6 +101,13 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
               </div>
             </div>
             <button
+              className="t-btn t-btn-outline"
+              type="button"
+              onClick={() => setQrClass(classItem)}
+            >
+              Show QR Code
+            </button>
+            <button
               className="t-btn"
               type="button"
               onClick={() => viewStudents(classItem)}
@@ -108,6 +117,12 @@ export default function Classes({ token, classes, setClasses, classesLoading, cl
           </div>
         ))}
       </div>
+      {qrClass && (
+        <ClassQRCodeModal
+          classItem={qrClass}
+          onClose={() => setQrClass(null)}
+        />
+      )}
       {selectedClass && (
         <div className="t-card">
           <div className="t-card-top">

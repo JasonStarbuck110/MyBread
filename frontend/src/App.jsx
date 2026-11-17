@@ -102,5 +102,15 @@ export default function App() {
     return <TeacherApp user={user} token={token} onLogout={logout} />
   }
 
-  return <StudentApp user={user} token={token} onLogout={logout} />
+  const joinCode = window.location.pathname === '/join-class' ? (new URLSearchParams(window.location.search).get('code') || '').trim().toUpperCase() : ''
+  const initialJoinCode = /^[A-F0-9]{8}$/.test(joinCode) ? joinCode : ''
+
+  return (
+    <StudentApp
+      user={user}
+      token={token}
+      onLogout={logout}
+      initialJoinCode={initialJoinCode}
+    />
+  )
 }

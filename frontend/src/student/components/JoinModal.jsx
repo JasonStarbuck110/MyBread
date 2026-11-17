@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
-export default function JoinModal({ onJoin, onClose }) {
-  const [code, setCode] = useState('')
+export default function JoinModal({ onJoin, onClose, initialCode = '' }) {
+  const [code, setCode] = useState(initialCode)
   const [msg, setMsg] = useState(null)
   const [loading, setLoading] = useState(false)
 

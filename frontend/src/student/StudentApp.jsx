@@ -30,7 +30,7 @@ const NAV = [
   ['links', 'Links'],
 ]
 
-export default function StudentApp({ user, token, onLogout }) {
+export default function StudentApp({ user, token, onLogout, initialJoinCode = ''}) {
   const [page, setPage] = useState('home')
   const [cash, setCash] = useState(0)
   const [holdings, setHoldings] = useState({})
@@ -44,7 +44,7 @@ export default function StudentApp({ user, token, onLogout }) {
   const [assignmentRewardNotice, setAssignmentRewardNotice] = useState('')
   const [, setClassesError] = useState('')
   const [, setClassesLoading] = useState(true)
-  const [joinOpen, setJoinOpen] = useState(false)
+  const [joinOpen, setJoinOpen] = useState(Boolean(initialJoinCode))
   const [links] = useLinks()
   const [xp, setXp] = useState(0)
   const [lessonProgress, setLessonProgress] = useState({})
@@ -56,9 +56,14 @@ export default function StudentApp({ user, token, onLogout }) {
   const [walletRewardStatus, setWalletRewardStatus] = useState({})
   const handleJoinClass = async (enrollmentCode) => {
     await joinClass(token, enrollmentCode)
+
     const data = await fetchEnrolledClasses(token)
     setClasses(data.classes || [])
     setJoinOpen(false)
+
+    if (window.location.pathname === '/join-class') {
+      window.history.replaceState(null, '', '/')
+    }
   }
 
   useEffect(() => {
@@ -475,7 +480,7 @@ export default function StudentApp({ user, token, onLogout }) {
         {page === 'links' && <Links links={links} />}
         {page === 'account' && <Account user={user} classes={classes} xp={xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
       </main>
-      {joinOpen && (<JoinModal classes={classes} onJoin={handleJoinClass} onClose={() => setJoinOpen(false)}/>)}
+      {joinOpen && ( <JoinModal onJoin={handleJoinClass} onClose={() => setJoinOpen(false)} initialCode={initialJoinCode}/>)}
     </div>
   )
 }
