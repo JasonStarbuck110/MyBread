@@ -57,3 +57,25 @@ export async function completeMiniLesson(token, lessonId, sectionIndex, answerIn
 
   return data
 }
+
+
+export async function abandonLessonAttempt(token, lessonId) {
+  const response = await fetch(
+    `/api/learning/lessons/${lessonId}/abandon`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(
+      data.error || 'Could not record the abandoned quiz.'
+    )
+  }
+
+  return data
+}

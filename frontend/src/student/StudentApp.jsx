@@ -18,7 +18,7 @@ import { fetchPortfolio, creditModuleReward, syncMiniRewards } from './tradingAp
 import { useLinks } from '../shared/useLinks'
 import logo from '../assets/logo.png'
 import './student.css'
-import { fetchLearningProgress, submitLessonAttempt, completeMiniLesson } from './learningApi'
+import { fetchLearningProgress, submitLessonAttempt, completeMiniLesson, abandonLessonAttempt} from './learningApi'
 import { fetchAssignedLessons, syncAssignmentRewards } from './assignmentApi'
 
 const NAV = [
@@ -32,6 +32,10 @@ const NAV = [
 
 export default function StudentApp({ user, token, onLogout, initialJoinCode = ''}) {
   const [page, setPage] = useState('home')
+  const [quizSubmitted, setQuizSubmitted] = useState(false)
+  const [exitTarget, setExitTarget] = useState(null)
+  const [exitSaving, setExitSaving] = useState(false)
+  const [exitError, setExitError] = useState('')
   const [cash, setCash] = useState(0)
   const [holdings, setHoldings] = useState({})
   const [portfolioData, setPortfolioData] = useState(null)
@@ -54,6 +58,43 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
   const [miniProgress, setMiniProgress] = useState({})
   const [lessonTarget, setLessonTarget] = useState({ mode: 'mini', sectionIndex: 0 })
   const [walletRewardStatus, setWalletRewardStatus] = useState({})
+
+
+const requestNavigation = (destination) => {
+  if (
+    page === 'quiz' &&
+    lessonTarget.mode === 'quiz' &&
+    !quizSubmitted
+  ) {
+    setExitError('')
+    setExitTarget(destination)
+    return
+  }
+
+  setPage(destination)
+}
+
+const confirmQuizExit = async () => {
+  if (exitSaving || exitTarget === null || !quizId) return
+
+  setExitSaving(true)
+  setExitError('')
+
+  try {
+    await abandonLessonAttempt(token, quizId)
+
+    const destination = exitTarget
+    setExitTarget(null)
+    setPage(destination)
+  } catch (error) {
+    setExitError(
+      error.message || 'Could not record the quiz attempt.'
+    )
+  } finally {
+    setExitSaving(false)
+  }
+}
+
   const handleJoinClass = async (enrollmentCode) => {
     await joinClass(token, enrollmentCode)
 
@@ -123,10 +164,8 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
 
         setLessonProgress(savedProgress)
         const savedMiniProgress = {}
-
         for (const completion of data.miniLessons || []) {
           const lessonId = Number(completion.lessonId)
-
           if (!savedMiniProgress[lessonId]) {
             savedMiniProgress[lessonId] = {}
         }
@@ -272,6 +311,7 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
     if (!lesson || lesson.status === 'todo' || !allMinisComplete(lesson, miniProgress)) return
     setLessonTarget({ mode: 'quiz', sectionIndex: 0 })
     setQuizId(id)
+    setQuizSubmitted(false)
     setPage('quiz')
     window.scrollTo(0, 0)
   }
@@ -390,6 +430,7 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
 
   const completeLesson = async (id, selectedAnswers) => {
     const result = await submitLessonAttempt(token, id, selectedAnswers)
+    setQuizSubmitted(true)
     setXp(result.progress?.totalExp ?? 0)
 
     setLessonProgress(previous => {
@@ -414,7 +455,7 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
   }
 
   const navBtn = ([id, label]) => (
-    <button key={id} className={activePage === id ? 'nav on' : 'nav'} onClick={() => setPage(id)} aria-current={activePage === id ? 'page' : undefined}>
+    <button key={id} className={activePage === id ? 'nav on' : 'nav'} onClick={() => requestNavigation(id)} aria-current={activePage === id ? 'page' : undefined}>
       {label}
     </button>
   )
@@ -464,7 +505,7 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
           />
         )}
         {page === 'quiz' && quizId && (
-          <LessonView key={`${quizId}-${lessonTarget.mode}-${lessonTarget.sectionIndex}`} lesson={LESSONS.find(l => l.id === quizId)} mode={lessonTarget.mode} sectionIndex={lessonTarget.sectionIndex} progress={lessonProgress} walletStatus={walletRewardStatus[quizId]} onRetryWallet={claimModuleWalletReward} onMiniComplete={completeMini} onBack={() => setPage('lessons')} onResult={completeLesson} />
+          <LessonView key={`${quizId}-${lessonTarget.mode}-${lessonTarget.sectionIndex}`} lesson={LESSONS.find(l => l.id === quizId)} mode={lessonTarget.mode} sectionIndex={lessonTarget.sectionIndex} progress={lessonProgress} walletStatus={walletRewardStatus[quizId]} onRetryWallet={claimModuleWalletReward} onMiniComplete={completeMini} onBack={() => requestNavigation('lessons')} onRetry={() => setQuizSubmitted(false)} onResult={completeLesson} />
         )}
         {page === 'stocks' && (
           <Stocks cash={cash} holdings={holdings} total={total} stockValue={stockValue} gain={portfolioData?.gain} backendPrices={portfolioData?.prices} portfolioError={portfolioError} refreshPortfolio={refreshPortfolio} />
@@ -480,6 +521,47 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
         {page === 'links' && <Links links={links} />}
         {page === 'account' && <Account user={user} classes={classes} xp={xp} onJoin={() => setJoinOpen(true)} onLogout={onLogout} />}
       </main>
+      {exitTarget !== null && (
+        <div className="q-exit-overlay">
+          <div
+            className="q-exit-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="quiz-exit-title"
+            aria-describedby="quiz-exit-description"
+          >
+            <h2 id="quiz-exit-title">Leave this quiz?</h2>
+            <p id="quiz-exit-description">You haven't completed this quiz. If you leave now, your current attempt will receive a score of 0%, and you'll need to retake the quiz.</p>
+            <p>Are you sure you want to leave?</p>
+            {exitError && (
+              <p role="alert" className="loss">
+                {exitError}
+              </p>
+            )}
+            <div className="q-exit-actions">
+              <button
+                type="button"
+                className="q-exit-back"
+                disabled={exitSaving}
+                onClick={() => {
+                  setExitTarget(null)
+                  setExitError('')
+                }}
+              >
+                Go Back
+              </button>
+              <button
+                type="button"
+                className="q-exit-confirm"
+                disabled={exitSaving}
+                onClick={confirmQuizExit}
+              >
+                {exitSaving ? 'Saving...' : 'I Understand'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {joinOpen && ( <JoinModal onJoin={handleJoinClass} onClose={() => setJoinOpen(false)} initialCode={initialJoinCode}/>)}
     </div>
   )

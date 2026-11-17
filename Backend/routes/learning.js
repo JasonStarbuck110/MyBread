@@ -211,4 +211,61 @@ router.post(
     })
 );
 
+
+router.post(
+    "/lessons/:lessonId/abandon",
+    authenticateToken,
+    requireRole("student"),
+    asyncRoute(async (req, res) => {
+        const numericId = Number(req.params.lessonId);
+        const lesson = Number.isSafeInteger(numericId) ? LESSON_CATALOG[numericId] : null;
+        if (!lesson) {
+            return res.status(400).json({
+                error: "Invalid lesson"
+            });
+        }
+
+        const studentId = req.user.id;
+        const quizId = String(numericId);
+        const session = await mongoose.startSession();
+
+        try {
+            var attemptNumber;
+
+            await session.withTransaction(async () => {
+                const previousAttempts =
+                    await QuizAttempt.countDocuments({
+                        studentId,
+                        quizId
+                    }).session(session);
+
+                attemptNumber = previousAttempts + 1;
+
+                await QuizAttempt.create(
+                    [{
+                        studentId,
+                        quizId,
+                        score: 0,
+                        maxScore: lesson.answers.length,
+                        passed: false,
+                        expAwarded: 0,
+                        attemptNumber,
+                        attemptedAt: new Date()
+                    }],
+                    { session }
+                );
+            });
+
+            return res.status(201).json({
+                message: "Quiz attempt recorded as 0",
+                score: 0,
+                maxScore: lesson.answers.length,
+                attemptNumber
+            });
+        } finally {
+            await session.endSession();
+        }
+    })
+);
+
 module.exports = router;
