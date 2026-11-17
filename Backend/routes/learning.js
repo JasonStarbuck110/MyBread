@@ -12,29 +12,66 @@ const asyncRoute = fn => (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
 };
 
+
 router.get(
     "/progress",
     authenticateToken,
     requireRole("student"),
     asyncRoute(async (req, res) => {
         const studentId = req.user.id;
-
-        const [progress, completions, miniCompletions] = await Promise.all([
+        const [
+            progress,
+            completions,
+            miniCompletions,
+            quizSummaries
+        ] = await Promise.all([
             StudentProgress.findOne({ studentId }).lean(),
-
-            LessonCompletion.find({ studentId })
-                .select("lessonId expAwarded completedAt")
-                .lean(),
-
-            MiniLessonCompletion.find({ studentId })
-                .select("lessonId sectionIndex completedAt")
-                .lean()
+            LessonCompletion.find({ studentId }).select("lessonId expAwarded completedAt").lean(),
+            MiniLessonCompletion.find({ studentId }).select("lessonId sectionIndex completedAt").lean(),
+            QuizAttempt.aggregate([
+                {
+                    $match: {
+                        studentId: new mongoose.Types.ObjectId(studentId)
+                    }
+                },
+                {
+                    $sort: {
+                        attemptedAt: -1,
+                        _id: -1
+                    }
+                },
+                {
+                    $project: {
+                        quizId: 1,
+                        attemptedAt: 1,
+                        percent: {
+                            $round: [
+                                {
+                                    $multiply: [
+                                        { $divide: ["$score", "$maxScore"] },
+                                        100
+                                    ]
+                                },
+                                0
+                            ]
+                        }
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$quizId",
+                        bestScore: { $max: "$percent" },
+                        latestScore: { $first: "$percent" },
+                        attemptCount: { $sum: 1 },
+                        latestAttemptAt: { $first: "$attemptedAt" }
+                    }
+                }
+            ])
         ]);
 
         return res.json({
             totalExp: progress?.totalExp ?? 0,
             level: progress?.level ?? 1,
-
             completedLessons: completions.map(completion => ({
                 lessonId: completion.lessonId,
                 expAwarded: completion.expAwarded,
@@ -45,10 +82,19 @@ router.get(
                 lessonId: completion.lessonId,
                 sectionIndex: completion.sectionIndex,
                 completedAt: completion.completedAt
+            })),
+
+            quizScores: quizSummaries.map(summary => ({
+                lessonId: summary._id,
+                bestScore: summary.bestScore,
+                latestScore: summary.latestScore,
+                attemptCount: summary.attemptCount,
+                latestAttemptAt: summary.latestAttemptAt
             }))
         });
     })
 );
+
 
 const MINI_CHECK_ANSWERS = Object.freeze({
     1: [1, 2, 1, 0, 2],

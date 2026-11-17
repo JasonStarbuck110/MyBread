@@ -18,7 +18,7 @@ import { fetchPortfolio, creditModuleReward, syncMiniRewards } from './tradingAp
 import { useLinks } from '../shared/useLinks'
 import logo from '../assets/logo.png'
 import './student.css'
-import { fetchLearningProgress, submitLessonAttempt, completeMiniLesson, abandonLessonAttempt} from './learningApi'
+import { fetchLearningProgress, submitLessonAttempt, completeMiniLesson, abandonLessonAttempt } from './learningApi'
 import { fetchAssignedLessons, syncAssignmentRewards } from './assignmentApi'
 
 const NAV = [
@@ -30,7 +30,7 @@ const NAV = [
   ['links', 'Links'],
 ]
 
-export default function StudentApp({ user, token, onLogout, initialJoinCode = ''}) {
+export default function StudentApp({ user, token, onLogout, initialJoinCode = '' }) {
   const [page, setPage] = useState('home')
   const [quizSubmitted, setQuizSubmitted] = useState(false)
   const [exitTarget, setExitTarget] = useState(null)
@@ -60,40 +60,53 @@ export default function StudentApp({ user, token, onLogout, initialJoinCode = ''
   const [walletRewardStatus, setWalletRewardStatus] = useState({})
 
 
-const requestNavigation = (destination) => {
-  if (
-    page === 'quiz' &&
-    lessonTarget.mode === 'quiz' &&
-    !quizSubmitted
-  ) {
-    setExitError('')
-    setExitTarget(destination)
-    return
-  }
+  const requestNavigation = (destination) => {
+    if (
+      page === 'quiz' &&
+      lessonTarget.mode === 'quiz' &&
+      !quizSubmitted
+    ) {
+      setExitError('')
+      setExitTarget(destination)
+      return
+    }
 
-  setPage(destination)
-}
-
-const confirmQuizExit = async () => {
-  if (exitSaving || exitTarget === null || !quizId) return
-
-  setExitSaving(true)
-  setExitError('')
-
-  try {
-    await abandonLessonAttempt(token, quizId)
-
-    const destination = exitTarget
-    setExitTarget(null)
     setPage(destination)
-  } catch (error) {
-    setExitError(
-      error.message || 'Could not record the quiz attempt.'
-    )
-  } finally {
-    setExitSaving(false)
   }
-}
+
+  const confirmQuizExit = async () => {
+    if (exitSaving || exitTarget === null || !quizId) return
+
+    setExitSaving(true)
+    setExitError('')
+
+    try {
+      const result = await abandonLessonAttempt(token, quizId)
+
+      setLessonProgress(previous => {
+        const current = previous[quizId] || {}
+        const next = {
+          ...previous,
+          [quizId]: {
+            ...current,
+            latestScore: 0,
+            attemptCount: result.attemptNumber
+          }
+        }
+
+        saveProgress(next)
+        return next
+      })
+
+      const destination = exitTarget
+      setExitTarget(null)
+      setPage(destination)
+    } catch (error) {
+      setExitError(error.message || 'Could not record the quiz attempt.')
+    } finally {
+      setExitSaving(false)
+    }
+  }
 
   const handleJoinClass = async (enrollmentCode) => {
     await joinClass(token, enrollmentCode)
@@ -108,21 +121,23 @@ const confirmQuizExit = async () => {
   }
 
   useEffect(() => {
-    var cancelled = false
+    let cancelled = false
 
     const loadServerProgress = async () => {
       setProgressLoading(true)
       setProgressError('')
 
       try {
-        var rewards = null
+        let rewards = null
         try {
           rewards = await syncMiniRewards()
         } catch (rewardError) {
-          if (!cancelled) setMiniRewardNotice(`Mini rewards could not sync: ${rewardError.message}`)
+          if (!cancelled) {
+            setMiniRewardNotice(`Mini rewards could not sync: ${rewardError.message}`)
+          }
         }
-        var assignmentReward = null
 
+        let assignmentReward = null
         try {
           assignmentReward = await syncAssignmentRewards(token)
           if (!cancelled) setAssignmentRefresh(current => current + 1)
@@ -136,56 +151,81 @@ const confirmQuizExit = async () => {
             setAssignmentRewardNotice(`Assignment rewards could not be confirmed: ${error.message}`)
           }
         }
+
         const data = await fetchLearningProgress(token)
+
         if ((rewards?.awardedCount || assignmentReward?.awardedCount) && !cancelled) {
           if (rewards?.awardedCount) {
-            setMiniRewardNotice(`Mini-lesson rewards: +$${(rewards.earnedCashCents / 100).toFixed(2)} and +${rewards.earnedXp} XP.`)
+            setMiniRewardNotice(
+              `Mini-lesson rewards: +$${(rewards.earnedCashCents / 100).toFixed(2)} and +${rewards.earnedXp} XP.`
+            )
           }
-          setCash((assignmentReward?.cashCents ?? rewards.cashCents) / 100)
+
+          const updatedCashCents = assignmentReward?.cashCents ?? rewards?.cashCents
+          if (Number.isFinite(updatedCashCents)) {
+            setCash(updatedCashCents / 100)
+          }
+
           try {
             const fresh = await fetchPortfolio()
-            if (!cancelled) { setPortfolioData(fresh); setCash(fresh.cash); setHoldings(fresh.holdings) }
+            if (!cancelled) {
+              setPortfolioData(fresh)
+              setCash(fresh.cash)
+              setHoldings(fresh.holdings)
+            }
           } catch {
-            // 
+            // Keep the previously loaded portfolio if its refresh fails.
           }
         }
 
         if (cancelled) return
-
         setXp(data.totalExp ?? 0)
 
         const savedProgress = {}
         for (const completion of data.completedLessons || []) {
-          savedProgress[Number(completion.lessonId)] = {
-            passed: true,
-            score: 100
+          const id = Number(completion.lessonId)
+          if (!Number.isSafeInteger(id)) continue
+          savedProgress[id] = { passed: true }
+        }
+
+        for (const summary of data.quizScores || []) {
+          const id = Number(summary.lessonId)
+          if (!Number.isSafeInteger(id)) continue
+
+          savedProgress[id] = {
+            ...savedProgress[id],
+            passed: Boolean(savedProgress[id]?.passed),
+            bestScore: summary.bestScore,
+            latestScore: summary.latestScore,
+            attemptCount: summary.attemptCount
           }
         }
 
         setLessonProgress(savedProgress)
+
         const savedMiniProgress = {}
         for (const completion of data.miniLessons || []) {
           const lessonId = Number(completion.lessonId)
+          if (!Number.isSafeInteger(lessonId)) continue
+
           if (!savedMiniProgress[lessonId]) {
             savedMiniProgress[lessonId] = {}
-        }
-
-        savedMiniProgress[lessonId][completion.sectionIndex] = true
-      }
-
-    setMiniProgress(savedMiniProgress)
-          saveProgress(savedProgress)
-        } catch (error) {
-          if (!cancelled) {
-            setProgressError(error.message || 'Could not load lesson progress')
           }
-        } finally {
-          if (!cancelled) setProgressLoading(false)
+          savedMiniProgress[lessonId][completion.sectionIndex] = true
         }
+
+        setMiniProgress(savedMiniProgress)
+        saveProgress(savedProgress)
+      } catch (error) {
+        if (!cancelled) {
+          setProgressError(error.message || 'Could not load lesson progress')
+        }
+      } finally {
+        if (!cancelled) setProgressLoading(false)
       }
+    }
 
     loadServerProgress()
-
     return () => {
       cancelled = true
     }
@@ -235,11 +275,25 @@ const confirmQuizExit = async () => {
   useEffect(() => { refreshPortfolio().catch(() => {}) }, [])
   const stockValue = portfolioData?.stockValue ?? Object.entries(holdings).reduce((s, [t, sh]) => s + sh * (STOCKS[t]?.price || 0), 0)
   const total = portfolioData?.total ?? cash + stockValue
-  const lessons = LESSONS.map((l,i) => {
-    const progress = lessonProgress[l.id]
-    const previousComplete = i === 0 || lessonProgress[LESSONS[i-1].id]?.passed
-    return { ...l, status: progress?.passed ? 'done' : previousComplete ? 'next' : 'todo', score: progress?.score }
+  const lessons = LESSONS.map((lesson, index) => {
+    const progress = lessonProgress[lesson.id]
+    const previousComplete =
+      index === 0 ||
+      lessonProgress[LESSONS[index - 1].id]?.passed
+
+    return {
+      ...lesson,
+      status: progress?.passed
+        ? 'done'
+        : previousComplete
+          ? 'next'
+          : 'todo',
+      bestScore: progress?.bestScore,
+      latestScore: progress?.latestScore,
+      attemptCount: progress?.attemptCount ?? 0
+    }
   })
+
   const activePage = page === 'quiz' ? 'lessons' : page
 
   useEffect(() => {
@@ -264,7 +318,7 @@ const confirmQuizExit = async () => {
       }
     }
 
-	loadClasses()
+    loadClasses()
 
     return () => {
       cancelled = true
@@ -300,6 +354,7 @@ const confirmQuizExit = async () => {
     const lesson = lessons.find(l => l.id === id)
     if (!lesson || lesson.status === 'todo' || !lesson.screens[sectionIndex]) return
     if (sectionIndex > 0 && !hasCompletedMini(miniProgress, id, sectionIndex - 1)) return
+    
     setLessonTarget({ mode: 'mini', sectionIndex })
     setQuizId(id)
     setPage('quiz')
@@ -309,6 +364,7 @@ const confirmQuizExit = async () => {
   const openQuiz = (id) => {
     const lesson = lessons.find(l => l.id === id)
     if (!lesson || lesson.status === 'todo' || !allMinisComplete(lesson, miniProgress)) return
+
     setLessonTarget({ mode: 'quiz', sectionIndex: 0 })
     setQuizId(id)
     setQuizSubmitted(false)
@@ -319,6 +375,7 @@ const confirmQuizExit = async () => {
   const openLesson = (id) => {
     const lesson = lessons.find(l => l.id === id)
     if (!lesson || lesson.status === 'todo') return setPage('lessons')
+
     const firstIncomplete = lesson.screens.findIndex((_, i) => !hasCompletedMini(miniProgress, id, i))
     if (firstIncomplete !== -1) openMini(id, firstIncomplete)
     else openQuiz(id)
@@ -334,7 +391,6 @@ const confirmQuizExit = async () => {
 
     if (assignment.kind === 'mini') {
       const section = Number(assignment.sectionIndex)
-
       if (section > 0 && !hasCompletedMini(miniProgress, id, section - 1)) {
         setPage('lessons')
         return
@@ -434,14 +490,21 @@ const confirmQuizExit = async () => {
     setXp(result.progress?.totalExp ?? 0)
 
     setLessonProgress(previous => {
+      const current = previous[id] || {}
       const next = {
         ...previous,
         [id]: {
-          ...(previous[id] || {}),
-          passed: Boolean(result.passed || previous[id]?.passed),
-          score: result.percent
+          ...current,
+          passed: Boolean(result.passed || current.passed),
+          bestScore: Math.max(
+            current.bestScore ?? 0,
+            result.percent
+          ),
+          latestScore: result.percent,
+          attemptCount: (current.attemptCount ?? 0) + 1
         }
       }
+
       saveProgress(next)
       return next
     })
@@ -562,7 +625,9 @@ const confirmQuizExit = async () => {
           </div>
         </div>
       )}
-      {joinOpen && ( <JoinModal onJoin={handleJoinClass} onClose={() => setJoinOpen(false)} initialCode={initialJoinCode}/>)}
+      {joinOpen && (
+        <JoinModal onJoin={handleJoinClass} onClose={() => setJoinOpen(false)} initialCode={initialJoinCode} />
+      )}
     </div>
   )
 }
