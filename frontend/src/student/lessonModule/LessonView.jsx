@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import '../quiz.css'
 
-export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, walletStatus, onRetryWallet, onResult, onMiniComplete, onBack }) {
+export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, walletStatus, onRetryWallet, onResult, onMiniComplete, onBack, onRetry}) {
   const [phase, setPhase] = useState('reading')
   const [choice, setChoice] = useState(null)
   const [answers, setAnswers] = useState({})
@@ -128,7 +128,21 @@ export default function LessonView({ lesson, mode = 'mini', sectionIndex = 0, wa
           <p key={q.id || i}>
           <strong>{i + 1}. {answers[i] === q.correct ? 'Correct' : 'Incorrect'}.</strong> 
           {q.explanation || `Correct answer: ${q.answers[q.correct]}`}</p>)}</div>
-          <button className="q-primary-button" onClick={result.passed ? onBack : () => { setAnswers({}); setResult(null); setSubmittedAnswers(null); setError('') }}>{result.passed ? 'Back to modules' : 'Retry quiz'}</button>
+          <button
+            className="q-primary-button"
+            onClick={
+              result.passed ? onBack : () => {
+                onRetry?.()
+                setAnswers({})
+                setResult(null)
+                setSubmittedAnswers(null)
+                setError('')
+                goTop()
+              }
+            }
+          >
+            {result.passed ? 'Back to modules' : 'Retry quiz'}
+          </button>
       </section> : <section className="q-question-card">
         <div className="q-question-heading">
           <p className="q-kicker">Module {lesson.id} quiz · {pass}/{questions.length} to pass</p>
