@@ -323,3 +323,100 @@ tr.you td {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.stocks-layout {
+  container-type: inline-size;
+  min-width: 0;
+}
+
+.stocks-layout .stocks-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: stretch;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stocks-layout .stocks-row > .panel {
+  min-width: 0;
+  margin: 0;
+}
+
+.stocks-layout .stocks-chart-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.stocks-layout .stocks-card-divider {
+  border-top: 1px solid rgba(78, 59, 49, 0.12);
+  margin: 1rem 0;
+}
+
+.stocks-layout .stocks-side-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.stocks-layout .stocks-side-card .tabs,
+.stocks-layout .stocks-discover-card .picks li,
+.stocks-layout .stocks-market-card .picks li {
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.stocks-layout .stocks-side-card .field input,
+.stocks-layout .stocks-side-card .btn {
+  max-width: 100%;
+}
+
+.stocks-layout .stocks-holdings-section .table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.stocks-layout .stocks-empty-chart {
+  display: grid;
+  flex: 1;
+  min-height: 180px;
+  place-items: center;
+  text-align: center;
+  padding: 1rem;
+}
+
+@container (min-width: 960px) {
+  .stocks-layout .stocks-row {
+  grid-template-columns: minmax(0, 65fr) minmax(360px, 35fr);    min-height: 420px;
+  }
+
+  .stocks-layout .stocks-side-card {
+    contain: size;
+    min-height: 0;
+    overflow: auto;
+  }
+}
+
+.stocks-layout .stocks-side-card {
+  overflow-wrap: normal;
+}
+
+.stocks-layout .stocks-side-card .btn, .stocks-layout .stocks-side-card .stock-symbol-button strong {
+  white-space: nowrap;
+}
+
+.stocks-layout .stocks-holdings-section th,
+.stocks-layout .stocks-holdings-section td {
+  white-space: nowrap;
+}
+
+.stocks-layout .stocks-discover-card .picks li {
+  flex-wrap: wrap;
+}
+
+.stocks-layout .stocks-discover-card .picks li > div {
+  flex: 1 1 100px;
+  overflow-wrap: normal;
+}
+
+.stocks-layout .stocks-discover-card .picks li > span {
+  white-space: nowrap;
+}

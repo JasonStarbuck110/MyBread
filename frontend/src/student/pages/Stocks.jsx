@@ -69,6 +69,7 @@ const stockInfo = (symbol) => quotes[symbol] || { name: STOCKS[symbol]?.name || 
     t.includes(query.trim().toUpperCase()) || stockInfo(t).name.toLowerCase().includes(query.trim().toLowerCase()))
   const matchMap = new Map(localMatches.map(symbol => [symbol, {symbol, name: stockInfo(symbol).name}]))
   for (const item of remoteResults) if (!matchMap.has(item.symbol)) matchMap.set(item.symbol, item)
+
   const matches = [...matchMap.values()].slice(0, 30)
   const pickStock = symbol => { setDetailSymbol(symbol); setTicker(symbol); setMsg(null) }
 
@@ -77,13 +78,15 @@ const stockInfo = (symbol) => quotes[symbol] || { name: STOCKS[symbol]?.name || 
     const amt = Number(amount)
     if (!ticker) return setMsg({ ok: false, text: 'Pick a stock first.' })
     if (!Number.isFinite(amt) || amt <= 0 || Math.round(amt * 100) <= 0) return setMsg({ ok: false, text: 'Enter an amount of at least $0.01.' })
+
     const price = stockInfo(ticker).price
     if (!(price > 0)) return setMsg({ ok: false, text: 'Stock price unavailable. Try again later.' })
     if (mode === 'buy' && amt > cash) return setMsg({ ok: false, text: `You only have ${money(cash)} available.` })
+
     const ownedShares = holdings[ticker] || 0
     if (mode === 'sell' && amt > ownedShares * price + 0.005) return setMsg({ ok: false, text: 'You cannot sell more than your holdings are worth.' })
     if (mode === 'sell' && ownedShares <= 0) return setMsg({ ok: false, text: 'You do not own this stock.' })
-    // Backend sells by share quantity, not by dollar amount; round down to 6 decimals.
+
     const shares = Math.min(ownedShares, Math.floor((amt / price) * 1_000_000) / 1_000_000)
     if (mode === 'sell' && shares <= 0) return setMsg({ ok: false, text: 'Amount is too small to sell.' })
     setBusy(true)
@@ -122,121 +125,140 @@ const stockInfo = (symbol) => quotes[symbol] || { name: STOCKS[symbol]?.name || 
           <p className="muted">Complete lessons to earn more simulated cash.</p>
         </div>
       </section>
-      <section className="panel">
-        <h3>Portfolio performance</h3>
-        <PortfolioChart total={total} />
-      </section>
-      <section className="panel">
-        <h3>My holdings</h3>
-        {held.length === 0 ? (
-          <p className="muted">You don't own any stocks yet. Search below to buy your first one.</p>
-        ) : (
-          <div className="table-wrap">
-            <table>
-              <thead>
-                <tr><th>Stock</th><th>Shares</th><th>Value</th><th></th></tr>
-              </thead>
-              <tbody>
-                {held.map(([t, sh]) => (
-                  <tr key={t}>
-                    <td><button className="stock-symbol-button" onClick={() => setDetailSymbol(t)}><strong>{t}</strong> <span className="muted">{stockInfo(t).name}</span></button></td>
-                    <td>{sh.toFixed(5)}</td>
-                    <td>{money(sh * stockInfo(t).price)}</td>
-                    <td>
-                      <button className="btn ghost small" onClick={() => { setDetailSymbol(t); setTicker(t); setMode('sell') }}>Trade</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
-      {detailSymbol && <section className="panel stock-detail" aria-label={`${detailSymbol} stock details`}>
-        <div className="stock-detail-head">
-          <div><h3>{stockInfo(detailSymbol).name} ({detailSymbol})</h3>
-            <p className="muted">Historical market prices • Simulated trading</p>
-          </div>
-          <button className="btn ghost small" onClick={() => setDetailSymbol('')}>Close details</button>
+      <div className="stocks-layout">
+        <div className="stocks-row">
+          <section className="panel stocks-chart-card">
+            <h3>Portfolio performance</h3>
+            <PortfolioChart total={total} />
+          </section>
+          <section className="panel stocks-side-card" aria-label="Simulated trade and holdings">
+            <div className="stocks-trade-section">
+              <h3>Simulated trade</h3>
+              {!ticker ? (
+                <p className="muted">Select a stock from your holdings or the discovery list.</p>
+              ) : (
+                <form onSubmit={submit}>
+                  <p><strong>{ticker}</strong> at {stockInfo(ticker).price > 0 ? money(stockInfo(ticker).price) : 'Quote loading or unavailable'}</p>
+                  <div className="tabs">
+                    {['buy', 'sell'].map((m) => (
+                      <button type="button" key={m} className={mode === m ? 'tab on' : 'tab'} onClick={() => setMode(m)}>
+                        {m === 'buy' ? 'Buy' : 'Sell'}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="field">
+                    <span>Amount in dollars</span>
+                    <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="25.00" />
+                  </label>
+                  <button className="btn" type="submit" disabled={busy || Boolean(portfolioError) || !(stockInfo(ticker).price > 0)}>{mode === 'buy' ? 'Buy' : 'Sell'} {ticker}</button>
+                </form>
+              )}
+              {msg && <p className={msg.ok ? 'gain' : 'loss'} role="status">{msg.text}</p>}
+            </div>
+            <div className="stocks-card-divider" />
+            <div className="stocks-holdings-section">
+              <h3>My holdings</h3>
+              {held.length === 0 ? (
+                <p className="muted">You don't own any stocks yet. Use Discover stocks to buy your first one.</p>
+              ) : (
+                <div className="table-wrap">
+                  <table>
+                    <thead>
+                      <tr><th>Stock</th><th>Shares</th><th>Value</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                      {held.map(([t, sh]) => (
+                        <tr key={t}>
+                          <td><button className="stock-symbol-button" onClick={() => setDetailSymbol(t)}><strong>{t}</strong> <span className="muted">{stockInfo(t).name}</span></button></td>
+                          <td>{sh.toFixed(5)}</td>
+                          <td>{money(sh * stockInfo(t).price)}</td>
+                          <td>
+                            <button className="btn ghost small" onClick={() => { setDetailSymbol(t); setTicker(t); setMode('sell') }}>Trade</button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </section>
         </div>
-        <PriceHistoryChart key={detailSymbol} symbol={detailSymbol} />
-        <div className="stock-detail-actions">
-          <span>Current quote: <strong>{stockInfo(detailSymbol).price > 0 ? money(stockInfo(detailSymbol).price) : 'Unavailable'}</strong></span>
-          <button className="btn ghost" onClick={() => toggleWatch(detailSymbol)} aria-pressed={watchlist.includes(detailSymbol)}>{watchlist.includes(detailSymbol) ? 'Remove from watchlist' : 'Add to watchlist'}</button>
-          <button className="btn" onClick={() => { setTicker(detailSymbol); setMode('buy'); setMsg(null) }}>Trade {detailSymbol}</button>
+        <div className="stocks-row">
+          <section className="panel stock-detail stocks-chart-card" aria-label={detailSymbol ? `${detailSymbol} stock details` : 'Selected stock details'}>
+            {detailSymbol ? (
+              <>
+                <div className="stock-detail-head">
+                  <div><h3>{stockInfo(detailSymbol).name} ({detailSymbol})</h3>
+                    <p className="muted">Historical market prices • Simulated trading</p>
+                  </div>
+                  <button className="btn ghost small" onClick={() => setDetailSymbol('')}>Close details</button>
+                </div>
+                <PriceHistoryChart key={detailSymbol} symbol={detailSymbol} />
+                <div className="stock-detail-actions">
+                  <span>Current quote: <strong>{stockInfo(detailSymbol).price > 0 ? money(stockInfo(detailSymbol).price) : 'Unavailable'}</strong></span>
+                  <button className="btn ghost" onClick={() => toggleWatch(detailSymbol)} aria-pressed={watchlist.includes(detailSymbol)}>{watchlist.includes(detailSymbol) ? 'Remove from watchlist' : 'Add to watchlist'}</button>
+                  <button className="btn" onClick={() => { setTicker(detailSymbol); setMode('buy'); setMsg(null) }}>Trade {detailSymbol}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3>Selected stock</h3>
+                <div className="stocks-empty-chart">
+                  <p className="muted">Select a stock from Discover stocks, My holdings, or My watchlist to view its price history.</p>
+                </div>
+              </>
+            )}
+          </section>
+          <section className="panel stocks-side-card stocks-discover-card">
+            <h3>Discover stocks</h3>
+            <label className="field">
+              <span>Search by ticker or company</span>
+              <input value={query} onChange={(e) => {
+                setQuery(e.target.value)
+                setRemoteResults([])
+                setSearchError('')
+                setSearching(false)
+              }} placeholder="Try AAPL or Microsoft" />
+            </label>
+            <ul className="list picks">
+              {matches.length === 0 && !searching && <li className="muted">No matches. Try a different ticker.</li>}
+              {matches.map(({symbol: t, name}) => (
+                <li key={t}>
+                  <div><button className="stock-symbol-button" onClick={() => pickStock(t)}><strong>{t}</strong> <span className="muted">{name}</span></button></div>
+                  <span>{stockInfo(t).price > 0 ? money(stockInfo(t).price) : 'View quote'}</span>
+                  <button type="button" className="btn ghost small" aria-label={`${watchlist.includes(t) ? 'Remove' : 'Add'} ${t} ${watchlist.includes(t) ? 'from' : 'to'} watchlist`} onClick={() => toggleWatch(t)}>{watchlist.includes(t) ? 'Watching' : '+ Watch'}</button>
+                  <button className="btn ghost small" onClick={() => { pickStock(t); setMode('buy') }}>Trade</button>
+                </li>
+              ))}
+            </ul>
+            {searching && <p className="muted" role="status">Searching stock symbols…</p>}
+            {searchError && <p className="loss" role="status">{searchError}</p>}
+            <p className="note">Search uses Twelve Data. Prices load on selection to save API credits. Educational use only.</p>
+          </section>
         </div>
-      </section>}
-      <div className="grid investing-extras">
-        <section className="panel">
-          <h3>My watchlist</h3>
-          <p className="muted">Saved on this browser for now, without account integration.</p>
-          {watchlist.length === 0 ? <p className="muted">Choose + Watch beside any stock to add it here.</p> :
-            <ul className="list picks">{watchlist.map(t => <li key={t}>
-              <button className="stock-symbol-button" onClick={() => pickStock(t)}><strong>{t}</strong> <span className="muted">{stockInfo(t).name}</span></button>
-              <button className="btn ghost small" onClick={() => toggleWatch(t)}>Remove</button>
-            </li>)}</ul>}
-        </section>
-        <section className="panel">
-          <h3>Market snapshot</h3>
-          <p className="muted">Curated example stocks; not a live ranking of market movers.</p>
-          <div className="tabs history-ranges"><button type="button" className={selectedMarketView === 'featured' ? 'tab on' : 'tab'} onClick={() => setSelectedMarketView('featured')}>Featured</button>
-          <button type="button" className={selectedMarketView === 'changes' ? 'tab on' : 'tab'} onClick={() => setSelectedMarketView('changes')}>Price changes</button></div>
-          <button className="btn ghost small" type="button" onClick={loadMarketSnapshot} disabled={marketBusy}>{marketBusy ? 'Loading…' : 'Load market snapshot'}</button>
-          <ul className="list picks">{(selectedMarketView === 'changes' ? featured.filter(t => Number.isFinite(marketQuotes[t]?.percentChange)).sort((a,b) => Math.abs(marketQuotes[b].percentChange) - Math.abs(marketQuotes[a].percentChange)) : featured).map(t => <li key={t}>
-            <button className="stock-symbol-button" onClick={() => pickStock(t)}><strong>{t}</strong> <span className="muted">{STOCKS[t].name}</span></button>
-            <span>{marketQuotes[t] ? `${money(marketQuotes[t].price)}${Number.isFinite(marketQuotes[t].percentChange) ? ` (${marketQuotes[t].percentChange > 0 ? '+' : ''}${marketQuotes[t].percentChange.toFixed(2)}%)` : ''}` : '—'}</span>
-          </li>)}</ul>
-        </section>
-      </div>
-      <div className="grid">
-        <section className="panel">
-          <h3>Discover stocks</h3>
-          <label className="field">
-            <span>Search by ticker or company</span>
-            <input value={query} onChange={(e) => {
-              setQuery(e.target.value)
-              setRemoteResults([])
-              setSearchError('')
-              setSearching(false)
-            }} placeholder="Try AAPL or Microsoft" />
-          </label>
-          <ul className="list picks">
-            {matches.length === 0 && !searching && <li className="muted">No matches. Try a different ticker.</li>}
-            {matches.map(({symbol: t, name}) => (
-              <li key={t}>
-                <div><button className="stock-symbol-button" onClick={() => pickStock(t)}><strong>{t}</strong> <span className="muted">{name}</span></button></div>
-                <span>{stockInfo(t).price > 0 ? money(stockInfo(t).price) : 'View quote'}</span>
-                <button type="button" className="btn ghost small" aria-label={`${watchlist.includes(t) ? 'Remove' : 'Add'} ${t} ${watchlist.includes(t) ? 'from' : 'to'} watchlist`} onClick={() => toggleWatch(t)}>{watchlist.includes(t) ? 'Watching' : '+ Watch'}</button>
-                <button className="btn ghost small" onClick={() => { pickStock(t); setMode('buy') }}>Trade</button>
-              </li>
-            ))}
-          </ul>
-          {searching && <p className="muted" role="status">Searching stock symbols…</p>}
-          {searchError && <p className="loss" role="status">{searchError}</p>}
-          <p className="note">Search uses Twelve Data. Prices load on selection to save API credits. Educational use only.</p>
-        </section>
-        <section className="panel">
-          <h3>Simulated trade</h3>
-          {!ticker ? (
-            <p className="muted">Select a stock from your holdings or the discovery list.</p>
-          ) : (
-            <form onSubmit={submit}>
-              <p><strong>{ticker}</strong> at {stockInfo(ticker).price > 0 ? money(stockInfo(ticker).price) : 'Quote loading or unavailable'}</p>
-              <div className="tabs">
-                {['buy', 'sell'].map((m) => (
-                  <button type="button" key={m} className={mode === m ? 'tab on' : 'tab'} onClick={() => setMode(m)}>
-                    {m === 'buy' ? 'Buy' : 'Sell'}
-                  </button>
-                ))}
-              </div>
-              <label className="field">
-                <span>Amount in dollars</span>
-                <input type="number" min="0" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="25.00" />
-              </label>
-              <button className="btn" type="submit" disabled={busy || Boolean(portfolioError) || !(stockInfo(ticker).price > 0)}>{mode === 'buy' ? 'Buy' : 'Sell'} {ticker}</button>
-            </form>
-          )}
-          {msg && <p className={msg.ok ? 'gain' : 'loss'} role="status">{msg.text}</p>}
+        <section className="panel stocks-market-card" aria-label="Market snapshot and watchlist">
+          <div>
+            <h3>Market snapshot</h3>
+            <p className="muted">Curated example stocks; not a live ranking of market movers.</p>
+            <div className="tabs history-ranges"><button type="button" className={selectedMarketView === 'featured' ? 'tab on' : 'tab'} onClick={() => setSelectedMarketView('featured')}>Featured</button>
+            <button type="button" className={selectedMarketView === 'changes' ? 'tab on' : 'tab'} onClick={() => setSelectedMarketView('changes')}>Price changes</button></div>
+            <button className="btn ghost small" type="button" onClick={loadMarketSnapshot} disabled={marketBusy}>{marketBusy ? 'Loading…' : 'Load market snapshot'}</button>
+            <ul className="list picks">{(selectedMarketView === 'changes' ? featured.filter(t => Number.isFinite(marketQuotes[t]?.percentChange)).sort((a,b) => Math.abs(marketQuotes[b].percentChange) - Math.abs(marketQuotes[a].percentChange)) : featured).map(t => <li key={t}>
+              <button className="stock-symbol-button" onClick={() => pickStock(t)}><strong>{t}</strong> <span className="muted">{STOCKS[t].name}</span></button>
+              <span>{marketQuotes[t] ? `${money(marketQuotes[t].price)}${Number.isFinite(marketQuotes[t].percentChange) ? ` (${marketQuotes[t].percentChange > 0 ? '+' : ''}${marketQuotes[t].percentChange.toFixed(2)}%)` : ''}` : '—'}</span>
+            </li>)}</ul>
+          </div>
+          <div className="stocks-card-divider" />
+          <div>
+            <h3>My watchlist</h3>
+            <p className="muted">Saved on this browser for now, without account integration.</p>
+            {watchlist.length === 0 ? <p className="muted">Choose + Watch beside any stock to add it here.</p> :
+              <ul className="list picks">{watchlist.map(t => <li key={t}>
+                <button className="stock-symbol-button" onClick={() => pickStock(t)}><strong>{t}</strong> <span className="muted">{stockInfo(t).name}</span></button>
+                <button className="btn ghost small" onClick={() => toggleWatch(t)}>Remove</button>
+              </li>)}</ul>}
+          </div>
         </section>
       </div>
     </>
