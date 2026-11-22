@@ -100,6 +100,8 @@
   transform: rotate(-2deg);
 }
 
+.mybread-sign-in .stock-arrow { display: none; }
+
 .mybread-sign-in .duck-stage { display: none; }
 .mybread-sign-in .duck-stage > * { position: absolute; }
 
@@ -124,7 +126,8 @@
   transform: rotate(-8deg);
 }
 
-/* Polaroid: cream rounded frame + the original (opaque) picture, tilted 8deg. */
+/* Polaroid: cream rounded frame + the original (opaque) picture, tilted 8deg.
+   To resize it, change width (and nudge left/top to re-centre). */
 .mybread-sign-in .duck-frame {
   left: 39.9%; top: 8%; width: 38%; aspect-ratio: 1;
   box-sizing: border-box;
@@ -466,6 +469,17 @@
     top: 0.196em;
     width: 5em;
     height: 0.62em;
+  }
+
+  /* black rising stock arrow, beside the headline */
+  .mybread-sign-in .stock-arrow {
+    display: block;
+    position: absolute;
+    left: calc(548 * var(--u));
+    top: calc(176 * var(--u));
+    width: calc(150 * var(--u));
+    height: calc(150 * var(--u));
+    color: #000;
   }
 
   .mybread-sign-in .duck-stage {
