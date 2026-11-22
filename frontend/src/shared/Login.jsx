@@ -170,9 +170,9 @@ export default function Login({ onLogin, onSignup }) {
           by practicing{' '}<br />
           with it.
         </p>
-        <svg className="stock-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-          <polyline points="16 7 22 7 22 13" />
+        <svg className="stock-arrow" viewBox="0 0 300 345" aria-hidden="true">
+          <polyline points="14,335 88,258 126,296 190,196 226,226 250,77" fill="none" stroke="currentColor" strokeWidth="26" strokeLinejoin="miter" strokeMiterlimit="10" />
+          <polygon points="262,6 296,86 205,70" fill="currentColor" />
         </svg>
         <div className="duck-stage" aria-hidden="true">
           <div className="wide-orbit" />
@@ -207,7 +207,7 @@ export default function Login({ onLogin, onSignup }) {
             </>
           ) : forgot ? (
             <>
-              <h2 className="sign-in-heading">Forgot your password?<br />reset</h2>
+              <h2 className="sign-in-heading">Forgot your password?</h2>
               {resetSentTo ? (
                 <p className="form-copy muted" role="status">
                   If an eligible account exists for {resetSentTo}, a password reset link will be sent. Check your inbox and spam folder.

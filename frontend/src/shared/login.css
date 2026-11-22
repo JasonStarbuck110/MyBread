@@ -471,15 +471,17 @@
     height: 0.62em;
   }
 
-  /* black rising stock arrow, beside the headline */
+  /* big, sharp black stock arrow: sits in the open space right of the headline,
+     vertically centred on it. Move: left/top. Resize: width/height (keep 300:345). */
   .mybread-sign-in .stock-arrow {
     display: block;
     position: absolute;
-    left: calc(548 * var(--u));
-    top: calc(176 * var(--u));
-    width: calc(150 * var(--u));
-    height: calc(150 * var(--u));
+    left: calc(448 * var(--u));
+    top: calc(160 * var(--u));
+    width: calc(270 * var(--u));
+    height: calc(310 * var(--u));
     color: #000;
+    overflow: visible;
   }
 
   .mybread-sign-in .duck-stage {
