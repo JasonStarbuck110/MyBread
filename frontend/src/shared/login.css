@@ -29,3 +29,374 @@
   .login-art img { width: 80px; height: 80px; }
   .login-art p { display: none; }
 }
+
+/* New sign-in design with modern look - VerifyEmail / ResetPassword keep using the .login rules above. */
+.mybread-sign-in {
+  --mb-forest: #244637;
+  --mb-green: #345940;
+  --mb-muted: #626e60;
+  --mb-sans: "Inter", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mb-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+
+  display: flex;
+  gap: 40px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+  background: linear-gradient(135deg, #153d31 0%, #345a46 60%, #1a3f33 100%);
+  font-family: var(--mb-sans);
+  color: var(--mb-forest);
+}
+
+/* Brand panel */
+.mybread-sign-in .brand-story {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  container-type: inline-size;
+  background: linear-gradient(135deg, #f4de9d 0%, #dcecab 50%, #9fceb5 100%);
+}
+
+.mybread-sign-in .mybread-wordmark {
+  padding: 40px 48px 0;
+  font-size: clamp(30px, 5.6cqw, 42px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.24;
+  color: var(--mb-forest);
+}
+
+.mybread-sign-in .brand-promise {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+  padding: 0 48px;
+  margin-top: clamp(24px, 7cqw, 56px);
+  font-family: var(--mb-serif);
+  font-size: min(12.4cqw, 92px);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 0.957;
+  color: var(--mb-forest);
+}
+
+.mybread-sign-in .brand-promise .em {
+  position: relative;
+  display: inline-block;
+  font-style: italic;
+}
+
+/* butter-yellow highlighter behind "money works" */
+.mybread-sign-in .brand-promise .em::before {
+  content: "";
+  position: absolute;
+  inset: 0.2em -0.07em 0.14em -0.06em;
+  z-index: -1;
+  border-radius: 10px;
+  background: #fbe288;
+  opacity: 0.85;
+  transform: rotate(-2deg);
+}
+
+/* Collage: every child is positioned as a % of this stage (744×385 reference) */
+.mybread-sign-in .duck-stage {
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  aspect-ratio: 744 / 385;
+  margin-top: auto;
+  flex: none;
+}
+
+.mybread-sign-in .duck-stage > * { position: absolute; }
+
+.mybread-sign-in .wide-orbit {
+  left: 6.7%; top: 8%; width: 87.4%; height: 72.7%;
+  border: 1px solid #426e52;
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+.mybread-sign-in .inner-orbit {
+  left: 13.4%; top: 14.8%; width: 73.9%; height: 59.2%;
+  border: 1px solid #426e52;
+  border-radius: 50%;
+  opacity: 0.18;
+}
+
+.mybread-sign-in .apricot-backing-card {
+  left: 50%; top: 13.8%; width: 37.1%; height: 70.1%;
+  border-radius: 24px;
+  background: #f3b99b;
+  transform: rotate(-8deg);
+}
+
+.mybread-sign-in .duck {
+  left: 33.6%; top: 0; width: 50.7%; aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.mybread-sign-in .translucent-paper {
+  left: 55.5%; top: 10.4%; width: 15.1%; height: 8.3%;
+  border-radius: 2px;
+  background: #f9e9ba;
+  opacity: 0.8;
+  transform: rotate(8deg);
+}
+
+.mybread-sign-in .money-token {
+  left: 16.7%; top: 32.7%; width: 15.1%; aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--mb-forest);
+  box-shadow: 0 8px 18px rgba(27, 67, 49, 0.18);
+  transform: rotate(-12deg);
+}
+
+.mybread-sign-in .token-inset-border {
+  position: absolute;
+  inset: 7.1%;
+  border: 1px solid #dceaab;
+  border-radius: 50%;
+}
+
+.mybread-sign-in .dollar-symbol {
+  position: relative;
+  font-family: var(--mb-serif);
+  font-size: 9.7cqw;
+  line-height: 1;
+  color: #e9f0bf;
+}
+
+/* Form card */
+.mybread-sign-in .sign-in-form {
+  flex: 0 1 584px;
+  min-width: 0;
+  align-self: center;
+  padding: 64px;
+  border: 1px solid #fff;
+  border-radius: 32px;
+  background: #fffefa;
+  box-shadow: 0 20px 60px rgba(13, 44, 33, 0.15);
+}
+
+.mybread-sign-in .sign-in-heading {
+  margin: 0 0 48px;
+  font-family: var(--mb-sans);
+  font-size: clamp(36px, 3.4vw, 48px);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1.083;
+  color: var(--mb-forest);
+}
+
+.mybread-sign-in .sf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.mybread-sign-in .sf-field label {
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px;
+  color: #454545;
+}
+
+.mybread-sign-in .input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 60px;
+  padding: 0 14px 0 18px;
+  border: 1px solid #d4d4d4;
+  border-radius: 12px;
+  background: #f7f8f2;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.06);
+}
+
+.mybread-sign-in .input-wrap:focus-within {
+  border-color: var(--mb-green);
+  box-shadow: 0 0 0 3px rgba(52, 89, 64, 0.2);
+}
+
+.mybread-sign-in .input-wrap input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font-family: var(--mb-sans);
+  font-size: 18px;
+  line-height: 28px;
+  color: var(--mb-forest);
+}
+
+.mybread-sign-in .input-wrap input::placeholder { color: #767676; }
+
+.mybread-sign-in .pw-toggle {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #5c6b5c;
+  cursor: pointer;
+}
+
+.mybread-sign-in .pw-toggle:hover { color: var(--mb-forest); }
+
+.mybread-sign-in .password-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--mb-muted);
+}
+
+.mybread-sign-in .form-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -4px 0 32px;
+}
+
+.mybread-sign-in .remember-for-days {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  line-height: 24px;
+  color: #354d3f;
+  cursor: pointer;
+}
+
+.mybread-sign-in .remember-for-days input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--mb-green);
+  cursor: pointer;
+}
+
+.mybread-sign-in .text-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: var(--mb-sans);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--mb-green);
+  cursor: pointer;
+}
+
+.mybread-sign-in .text-link:hover:not(:disabled) { text-decoration: underline; }
+.mybread-sign-in .text-link:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mybread-sign-in .form-error {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #b3261e;
+}
+
+.mybread-sign-in .sign-in-button,
+.mybread-sign-in .sign-in-with-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  height: 60px;
+  border-radius: 999px;
+  font-family: var(--mb-sans);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.mybread-sign-in .sign-in-button {
+  border: 0;
+  color: #fff;
+  background: linear-gradient(90deg, #3d6b4d 0%, #2c523e 55%, #1c3d32 100%);
+}
+
+.mybread-sign-in .sign-in-button:hover:not(:disabled) { filter: brightness(1.12); }
+.mybread-sign-in .sign-in-button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.mybread-sign-in .sign-in-with-google {
+  margin-top: 16px;
+  border: 1px solid #c9d1c5;
+  background: #fff;
+  color: var(--mb-forest);
+}
+
+.mybread-sign-in .sign-in-with-google:hover { background: #f7f8f2; }
+
+.mybread-sign-in .create-account {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin: 36px 0 0;
+}
+
+.mybread-sign-in .account-question {
+  font-size: 14px;
+  line-height: 24px;
+  color: var(--mb-muted);
+}
+
+/* verification / forgot-password copy */
+.mybread-sign-in .form-copy {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--mb-forest);
+}
+.mybread-sign-in .form-copy.muted { color: var(--mb-muted); }
+.mybread-sign-in .sf-field + .form-error,
+.mybread-sign-in .form-copy + .text-link { margin-top: 4px; }
+.mybread-sign-in .text-link { display: block; }
+.mybread-sign-in .form-options .text-link,
+.mybread-sign-in .create-account .text-link { display: inline; }
+.mybread-sign-in .sign-in-button + .text-link { margin: 20px auto 0; }
+
+.mybread-sign-in button:focus-visible,
+.mybread-sign-in .remember-for-days input:focus-visible {
+  outline: 3px solid var(--mb-green);
+  outline-offset: 2px;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .mybread-sign-in .sign-in-form { padding: 48px 40px; }
+}
+
+@media (max-width: 900px) {
+  .mybread-sign-in { flex-direction: column; gap: 20px; padding: 16px; }
+  .mybread-sign-in .brand-story { flex: none; }
+  .mybread-sign-in .mybread-wordmark { padding: 28px 28px 0; }
+  .mybread-sign-in .brand-promise { padding: 0 28px 32px; font-size: clamp(44px, 12cqw, 72px); }
+  .mybread-sign-in .duck-stage { display: none; }
+  .mybread-sign-in .sign-in-form { flex: none; align-self: stretch; }
+}
+
+@media (max-width: 480px) {
+  .mybread-sign-in { padding: 12px; }
+  .mybread-sign-in .sign-in-form { padding: 32px 22px; border-radius: 24px; }
+  .mybread-sign-in .brand-story { border-radius: 24px; }
+  .mybread-sign-in .sign-in-heading { margin-bottom: 32px; }
+  .mybread-sign-in .form-options { flex-wrap: wrap; }
+}
