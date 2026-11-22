@@ -2,12 +2,21 @@ import { useState } from 'react'
 import logo from '../assets/logo.png'
 import './login.css'
 
-function EyeIcon({ open }) {
+function EyeIcon({ slashed }) {
   return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
       <circle cx="12" cy="12" r="3" />
-      {!open && <path d="M4 4l16 16" />}
+      {slashed && <path d="M4 4l16 16" />}
+    </svg>
+  )
+}
+
+function CheckCircle() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+      <circle className="hint-bg" cx="9" cy="9" r="9" />
+      <path d="M5.2 9.3l2.4 2.4 5.2-5.6" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }
@@ -29,6 +38,7 @@ export default function Login({ onLogin, onSignup }) {
   const [resendMessage, setResendMessage] = useState('')
   const [show, setShow] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [pwLen, setPwLen] = useState(0)
   const [mode, setMode] = useState('login') // 'login', 'signup' or 'forgot'
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -38,6 +48,7 @@ export default function Login({ onLogin, onSignup }) {
   const goTo = (next) => {
     setShow(false)
     setShowConfirm(false)
+    setPwLen(0)
     setError('')
     setResetSentTo('')
     setMode(next)
@@ -91,6 +102,7 @@ export default function Login({ onLogin, onSignup }) {
       setError("Passwords don't match.")
       return
     }
+
     setError('')
     setSubmitting(true)
     try {
@@ -145,7 +157,7 @@ export default function Login({ onLogin, onSignup }) {
     }
   }
 
-  // No Google auth exists on the backend yet, so this is visual only for now.
+  // No Google auth exists on the backend yet, so this is visual-only for now.
   const googleClick = () => setError("Google sign-in isn't available yet.")
 
   return (
@@ -153,16 +165,16 @@ export default function Login({ onLogin, onSignup }) {
       <section className="brand-story">
         <div className="mybread-wordmark">MyBread</div>
         <p className="brand-promise">
-          Learn how<br />
-          <span className="em">money works</span><br />
-          by practicing<br />
+          Learn how{' '}<br />
+          <span className="em">money works</span>{' '}<br />
+          by practicing{' '}<br />
           with it.
         </p>
         <div className="duck-stage" aria-hidden="true">
           <div className="wide-orbit" />
           <div className="inner-orbit" />
           <div className="apricot-backing-card" />
-          <img className="duck" alt="" src={logo} />
+          <div className="duck-frame"><img alt="" src={logo} /></div>
           <div className="translucent-paper" />
           <div className="money-token">
             <div className="token-inset-border" />
@@ -171,7 +183,7 @@ export default function Login({ onLogin, onSignup }) {
         </div>
       </section>
 
-      <section className="sign-in-form">
+      <section className={`sign-in-form${signup ? ' is-signup' : ''}`}>
         <form key={mode} onSubmit={submit}>
           {mode === 'verification' ? (
             <>
@@ -221,7 +233,7 @@ export default function Login({ onLogin, onSignup }) {
 
               {signup && (
                 <div className="sf-field">
-                  <label htmlFor="name">Full name</label>
+                  <label htmlFor="name">Name</label>
                   <div className="input-wrap">
                     <input id="name" name="name" type="text" autoComplete="name" placeholder="Enter your full name" required />
                   </div>
@@ -242,21 +254,28 @@ export default function Login({ onLogin, onSignup }) {
                     id="password"
                     name="password"
                     type={show ? 'text' : 'password'}
+                    className={signup ? undefined : 'dots'}
                     autoComplete={signup ? 'new-password' : 'current-password'}
                     minLength={signup ? 12 : undefined}
                     maxLength={signup ? 128 : undefined}
-                    placeholder="Enter your password"
+                    placeholder={signup ? 'Create a password' : '••••••••••••'}
+                    onChange={signup ? (e) => setPwLen(e.target.value.length) : undefined}
                     required
                   />
                   <button type="button" className="pw-toggle" onClick={() => setShow(!show)} aria-label={show ? 'Hide password' : 'Show password'} aria-pressed={show}>
-                    <EyeIcon open={show} />
+                    <EyeIcon slashed={show} />
                   </button>
                 </div>
-                {signup && <p className="password-hint">Password must be at least 12 characters long.</p>}
+                {signup && (
+                  <p className={`password-hint${pwLen >= 12 ? ' met' : ''}`}>
+                    <CheckCircle />
+                    <span>Must be at least 12 characters</span>
+                  </p>
+                )}
               </div>
 
               {signup && (
-                <div className="sf-field">
+                <div className="sf-field sf-field-last">
                   <label htmlFor="confirm">Confirm password</label>
                   <div className="input-wrap">
                     <input
@@ -269,7 +288,7 @@ export default function Login({ onLogin, onSignup }) {
                       required
                     />
                     <button type="button" className="pw-toggle" onClick={() => setShowConfirm(!showConfirm)} aria-label={showConfirm ? 'Hide password' : 'Show password'} aria-pressed={showConfirm}>
-                      <EyeIcon open={showConfirm} />
+                      <EyeIcon slashed={showConfirm} />
                     </button>
                   </div>
                 </div>
@@ -277,7 +296,7 @@ export default function Login({ onLogin, onSignup }) {
 
               {!signup && (
                 <div className="form-options">
-                  {/* Visual only: the backend doesn't support a longer session yet. */}
+                  {/* Visual-only: the backend doesn't support a longer session yet. */}
                   <label className="remember-for-days">
                     <input type="checkbox" name="remember" />
                     <span>Remember for 30 days</span>
@@ -289,7 +308,7 @@ export default function Login({ onLogin, onSignup }) {
               {error && <p className="form-error" role="alert">{error}</p>}
 
               <button className="sign-in-button" type="submit" disabled={submitting}>
-                {submitting ? (signup ? 'Creating account…' : 'Signing in…') : (signup ? 'Sign up' : 'Sign in')}
+                {submitting ? (signup ? 'Creating account…' : 'Signing in…') : (signup ? 'Get Started' : 'Sign in')}
               </button>
 
               <button type="button" className="sign-in-with-google" onClick={googleClick}>
@@ -300,7 +319,7 @@ export default function Login({ onLogin, onSignup }) {
               <p className="create-account">
                 <span className="account-question">{signup ? 'Already have an account?' : "Don't have an account?"}</span>
                 <button type="button" className="text-link" onClick={() => goTo(signup ? 'login' : 'signup')}>
-                  {signup ? 'Sign In' : 'Sign Up'}
+                  {signup ? 'Log in' : 'Sign Up'}
                 </button>
               </p>
             </>

@@ -30,19 +30,21 @@
   .login-art p { display: none; }
 }
 
-/* New sign-in design with modern look - VerifyEmail / ResetPassword keep using the .login rules above. */
+/* New sign-in design — VerifyEmail / ResetPassword keep using the .login rules above. */
 .mybread-sign-in {
   --mb-forest: #244637;
   --mb-green: #345940;
   --mb-muted: #626e60;
   --mb-sans: "Inter", system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
   --mb-serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --k: 1px;
 
   display: flex;
-  gap: 40px;
+  flex-direction: column;
+  gap: 20px;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: 24px;
+  padding: 16px;
   background: linear-gradient(135deg, #153d31 0%, #345a46 60%, #1a3f33 100%);
   font-family: var(--mb-sans);
   color: var(--mb-forest);
@@ -50,20 +52,15 @@
 
 /* Brand panel */
 .mybread-sign-in .brand-story {
-  flex: 1 1 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
   position: relative;
   overflow: hidden;
   border-radius: 32px;
-  container-type: inline-size;
   background: linear-gradient(135deg, #f4de9d 0%, #dcecab 50%, #9fceb5 100%);
 }
 
 .mybread-sign-in .mybread-wordmark {
-  padding: 40px 48px 0;
-  font-size: clamp(30px, 5.6cqw, 42px);
+  padding: 28px 28px 0;
+  font-size: 30px;
   font-weight: 600;
   letter-spacing: -0.05em;
   line-height: 1.24;
@@ -74,15 +71,16 @@
   position: relative;
   isolation: isolate;
   margin: 0;
-  padding: 0 48px;
-  margin-top: clamp(24px, 7cqw, 56px);
+  padding: 20px 28px 32px;
   font-family: var(--mb-serif);
-  font-size: min(12.4cqw, 92px);
+  font-size: clamp(32px, 6.5vw, 52px);
   font-weight: 400;
   letter-spacing: -0.02em;
-  line-height: 0.957;
+  line-height: 1.05;
   color: var(--mb-forest);
 }
+
+.mybread-sign-in .brand-promise br { display: none; }
 
 .mybread-sign-in .brand-promise .em {
   position: relative;
@@ -94,24 +92,15 @@
 .mybread-sign-in .brand-promise .em::before {
   content: "";
   position: absolute;
-  inset: 0.2em -0.07em 0.14em -0.06em;
+  inset: 0.2em -0.1em 0.14em -0.06em;
   z-index: -1;
-  border-radius: 10px;
+  border-radius: 0.11em;
   background: #fbe288;
   opacity: 0.85;
   transform: rotate(-2deg);
 }
 
-/* Collage: every child is positioned as a % of this stage (744×385 reference) */
-.mybread-sign-in .duck-stage {
-  position: relative;
-  container-type: inline-size;
-  width: 100%;
-  aspect-ratio: 744 / 385;
-  margin-top: auto;
-  flex: none;
-}
-
+.mybread-sign-in .duck-stage { display: none; }
 .mybread-sign-in .duck-stage > * { position: absolute; }
 
 .mybread-sign-in .wide-orbit {
@@ -135,9 +124,23 @@
   transform: rotate(-8deg);
 }
 
-.mybread-sign-in .duck {
-  left: 33.6%; top: 0; width: 50.7%; aspect-ratio: 1;
-  object-fit: contain;
+/* Polaroid: cream rounded frame + the original (opaque) picture, tilted 8deg. */
+.mybread-sign-in .duck-frame {
+  left: 39.9%; top: 8%; width: 38%; aspect-ratio: 1;
+  box-sizing: border-box;
+  padding: 0.94%;
+  border-radius: 8.5%;
+  background: #fffcf5;
+  box-shadow: 0 14px 30px rgba(27, 67, 49, 0.22);
+  transform: rotate(8deg);
+}
+
+.mybread-sign-in .duck-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4%;
 }
 
 .mybread-sign-in .translucent-paper {
@@ -168,55 +171,59 @@
 .mybread-sign-in .dollar-symbol {
   position: relative;
   font-family: var(--mb-serif);
-  font-size: 9.7cqw;
+  font-size: 72px;
   line-height: 1;
   color: #e9f0bf;
 }
 
 /* Form card */
 .mybread-sign-in .sign-in-form {
-  flex: 0 1 584px;
-  min-width: 0;
-  align-self: center;
-  padding: 64px;
+  padding: calc(64 * var(--k)) calc(64 * var(--k)) calc(80 * var(--k));
   border: 1px solid #fff;
-  border-radius: 32px;
+  border-radius: calc(32 * var(--k));
   background: #fffefa;
   box-shadow: 0 20px 60px rgba(13, 44, 33, 0.15);
 }
 
 .mybread-sign-in .sign-in-heading {
-  margin: 0 0 48px;
+  margin: 0 0 calc(48 * var(--k));
   font-family: var(--mb-sans);
-  font-size: clamp(36px, 3.4vw, 48px);
+  font-size: calc(48 * var(--k));
   font-weight: 600;
   letter-spacing: -0.05em;
   line-height: 1.083;
   color: var(--mb-forest);
 }
 
+/* last field before the Get Started button */
+.mybread-sign-in .sf-field.sf-field-last { margin-bottom: calc(32 * var(--k)); }
+
+/* the sign-up card in the design is tighter than the log-in card */
+.mybread-sign-in .is-signup { padding-bottom: calc(57 * var(--k)); }
+.mybread-sign-in .is-signup .sign-in-heading { margin-bottom: calc(33 * var(--k)); }
+
 .mybread-sign-in .sf-field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
+  gap: calc(8 * var(--k));
+  margin-bottom: calc(20 * var(--k));
 }
 
 .mybread-sign-in .sf-field label {
-  font-size: 16px;
+  font-size: calc(16 * var(--k));
   font-weight: 500;
-  line-height: 24px;
+  line-height: calc(24 * var(--k));
   color: #454545;
 }
 
 .mybread-sign-in .input-wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
-  height: 60px;
-  padding: 0 14px 0 18px;
+  gap: calc(12 * var(--k));
+  height: calc(60 * var(--k));
+  padding: 0 calc(14 * var(--k)) 0 calc(18 * var(--k));
   border: 1px solid #d4d4d4;
-  border-radius: 12px;
+  border-radius: calc(12 * var(--k));
   background: #f7f8f2;
   box-shadow: 0 2px 3px rgba(0, 0, 0, 0.06);
 }
@@ -235,59 +242,85 @@
   outline: none;
   background: transparent;
   font-family: var(--mb-sans);
-  font-size: 18px;
-  line-height: 28px;
+  font-size: calc(18 * var(--k));
+  line-height: calc(28 * var(--k));
   color: var(--mb-forest);
 }
 
 .mybread-sign-in .input-wrap input::placeholder { color: #767676; }
+.mybread-sign-in .input-wrap input.dots::placeholder { letter-spacing: calc(2 * var(--k)); }
 
 .mybread-sign-in .pw-toggle {
   display: grid;
   place-items: center;
   flex: none;
-  width: 32px;
-  height: 32px;
+  width: calc(32 * var(--k));
+  height: calc(32 * var(--k));
   padding: 0;
   border: 0;
   border-radius: 8px;
   background: none;
-  color: #5c6b5c;
+  color: #767676;
   cursor: pointer;
 }
 
 .mybread-sign-in .pw-toggle:hover { color: var(--mb-forest); }
 
+/* "Must be at least 12 characters" — turns green once met */
 .mybread-sign-in .password-hint {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--k));
   margin: 0;
-  font-size: 13px;
-  color: var(--mb-muted);
+  font-size: calc(13 * var(--k));
+  line-height: calc(24 * var(--k));
+  color: var(--mb-green);
 }
+
+.mybread-sign-in .password-hint svg {
+  flex: none;
+  width: calc(18 * var(--k));
+  height: calc(18 * var(--k));
+}
+
+.mybread-sign-in .password-hint .hint-bg { fill: #d2d4d0; transition: fill 0.15s; }
+.mybread-sign-in .password-hint.met .hint-bg { fill: #3d6b4d; }
 
 .mybread-sign-in .form-options {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: -4px 0 32px;
+  margin: calc(-4 * var(--k)) 0 calc(32 * var(--k));
 }
 
 .mybread-sign-in .remember-for-days {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  line-height: 24px;
+  gap: calc(8 * var(--k));
+  font-size: calc(14 * var(--k));
+  line-height: calc(24 * var(--k));
   color: #354d3f;
   cursor: pointer;
 }
 
 .mybread-sign-in .remember-for-days input {
-  width: 18px;
-  height: 18px;
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  width: calc(18 * var(--k));
+  height: calc(18 * var(--k));
   margin: 0;
-  accent-color: var(--mb-green);
+  border: 1px solid #91a18d;
+  border-radius: 4px;
+  background: #fff;
   cursor: pointer;
+}
+
+.mybread-sign-in .remember-for-days input:checked {
+  border-color: var(--mb-green);
+  background: var(--mb-green) center / 72% no-repeat
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.5l3 3 6-7'/%3E%3C/svg%3E");
 }
 
 .mybread-sign-in .text-link {
@@ -295,9 +328,9 @@
   border: 0;
   background: none;
   font-family: var(--mb-sans);
-  font-size: 14px;
+  font-size: calc(14 * var(--k));
   font-weight: 600;
-  line-height: 24px;
+  line-height: calc(24 * var(--k));
   color: var(--mb-green);
   cursor: pointer;
 }
@@ -316,14 +349,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: calc(12 * var(--k));
   width: 100%;
-  height: 60px;
+  height: calc(60 * var(--k));
   border-radius: 999px;
   font-family: var(--mb-sans);
-  font-size: 16px;
+  font-size: calc(16 * var(--k));
   font-weight: 600;
-  line-height: 24px;
+  line-height: calc(24 * var(--k));
   cursor: pointer;
 }
 
@@ -337,7 +370,7 @@
 .mybread-sign-in .sign-in-button:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .mybread-sign-in .sign-in-with-google {
-  margin-top: 16px;
+  margin-top: calc(16 * var(--k));
   border: 1px solid #c9d1c5;
   background: #fff;
   color: var(--mb-forest);
@@ -345,23 +378,28 @@
 
 .mybread-sign-in .sign-in-with-google:hover { background: #f7f8f2; }
 
+.mybread-sign-in .sign-in-with-google svg {
+  width: calc(20 * var(--k));
+  height: calc(20 * var(--k));
+}
+
 .mybread-sign-in .create-account {
   display: flex;
   justify-content: center;
   gap: 5px;
-  margin: 36px 0 0;
+  margin: calc(36 * var(--k)) 0 0;
 }
 
 .mybread-sign-in .account-question {
-  font-size: 14px;
-  line-height: 24px;
+  font-size: calc(14 * var(--k));
+  line-height: calc(24 * var(--k));
   color: var(--mb-muted);
 }
 
 /* verification / forgot-password copy */
 .mybread-sign-in .form-copy {
   margin: 0 0 12px;
-  font-size: 15px;
+  font-size: calc(15 * var(--k));
   line-height: 1.5;
   color: var(--mb-forest);
 }
@@ -379,24 +417,83 @@
   outline-offset: 2px;
 }
 
-/* Responsive */
-@media (max-width: 1100px) {
-  .mybread-sign-in .sign-in-form { padding: 48px 40px; }
+/* Desktop */
+@media (min-width: 901px) {
+  .mybread-sign-in {
+    --k: clamp(0.85px, min(0.06944vw, 0.10417vh), 1.1px);
+    display: grid;
+    grid-template-columns: minmax(0, 744fr) minmax(0, 672fr);
+    gap: 0;
+    padding: calc(24 * var(--k)) 0 calc(24 * var(--k)) calc(24 * var(--k));
+  }
+
+  .mybread-sign-in .sign-in-form {
+    justify-self: center;
+    align-self: center;
+    width: min(calc(584 * var(--k)), calc(100% - 48px));
+    transform: translateX(calc(-4 * var(--k)));
+  }
+
+  .mybread-sign-in .brand-story {
+    position: sticky;
+    top: calc(24 * var(--k));
+    align-self: start;
+    height: max(calc(100vh - 48 * var(--k)), 480px);
+    height: max(calc(100dvh - 48 * var(--k)), 480px);
+    container-type: size;
+  }
+
+  .mybread-sign-in .brand-story > * { --u: min(0.1344cqw, 0.1096cqh); }
+
+  .mybread-sign-in .mybread-wordmark {
+    padding: calc(40 * var(--u)) calc(48 * var(--u)) 0;
+    font-size: calc(42 * var(--u));
+  }
+
+  .mybread-sign-in .brand-promise {
+    margin-top: calc(60 * var(--u));
+    padding: 0 calc(48 * var(--u));
+    font-size: calc(92 * var(--u));
+    line-height: 0.957;
+  }
+
+  .mybread-sign-in .brand-promise br { display: inline; }
+
+  /* highlighter: the design's fixed 460x57 bar (5em x .62em at this size) */
+  .mybread-sign-in .brand-promise .em::before {
+    inset: auto;
+    left: -0.055em;
+    top: 0.196em;
+    width: 5em;
+    height: 0.62em;
+  }
+
+  .mybread-sign-in .duck-stage {
+    display: block;
+    left: 50%;
+    bottom: 0;
+    width: calc(744 * var(--u));
+    height: calc(385 * var(--u));
+    transform: translateX(-50%);
+  }
+  .mybread-sign-in .brand-story > .duck-stage { position: absolute; }
+
+  .mybread-sign-in .dollar-symbol { font-size: calc(72 * var(--u)); }
 }
 
-@media (max-width: 900px) {
-  .mybread-sign-in { flex-direction: column; gap: 20px; padding: 16px; }
-  .mybread-sign-in .brand-story { flex: none; }
-  .mybread-sign-in .mybread-wordmark { padding: 28px 28px 0; }
-  .mybread-sign-in .brand-promise { padding: 0 28px 32px; font-size: clamp(44px, 12cqw, 72px); }
-  .mybread-sign-in .duck-stage { display: none; }
-  .mybread-sign-in .sign-in-form { flex: none; align-self: stretch; }
+/* Responsive */
+@media (max-width: 1100px) {
+  .mybread-sign-in .sign-in-form {
+    padding-top: calc(48 * var(--k));
+    padding-left: calc(40 * var(--k));
+    padding-right: calc(40 * var(--k));
+  }
 }
 
 @media (max-width: 480px) {
-  .mybread-sign-in { padding: 12px; }
-  .mybread-sign-in .sign-in-form { padding: 32px 22px; border-radius: 24px; }
+  .mybread-sign-in { --k: 0.8px; padding: 12px; }
   .mybread-sign-in .brand-story { border-radius: 24px; }
+  .mybread-sign-in .sign-in-form { padding: 32px 22px; border-radius: 24px; }
   .mybread-sign-in .sign-in-heading { margin-bottom: 32px; }
   .mybread-sign-in .form-options { flex-wrap: wrap; }
 }
