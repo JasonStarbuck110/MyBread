@@ -479,7 +479,7 @@
     left: max(
       calc(448 * var(--u)),
       min(
-        calc((506 * var(--u) + 100cqw) / 2 - 135 * var(--u)),
+        calc(169 * var(--u) + 40cqw),
         calc(100cqw - 294 * var(--u))
       )
     );
