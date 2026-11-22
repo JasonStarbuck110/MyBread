@@ -476,7 +476,13 @@
   .mybread-sign-in .stock-arrow {
     display: block;
     position: absolute;
-    left: calc(448 * var(--u));
+    left: max(
+      calc(448 * var(--u)),
+      min(
+        calc((506 * var(--u) + 100cqw) / 2 - 135 * var(--u)),
+        calc(100cqw - 294 * var(--u))
+      )
+    );
     top: calc(160 * var(--u));
     width: calc(270 * var(--u));
     height: calc(310 * var(--u));
